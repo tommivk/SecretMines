@@ -8,7 +8,7 @@ pub static CONFIG_KEY: &[u8] = b"config";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub board: [u8; 10],
+    pub board: [u8; 25],
     pub mine_index: u8,
     pub player_a: Option<HumanAddr>,
     pub player_b: Option<HumanAddr>,

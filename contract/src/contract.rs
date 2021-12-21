@@ -1,19 +1,23 @@
 use cosmwasm_std::{
-    debug_print, to_binary, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier,
-    StdError, StdResult, Storage,
+    to_binary, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier, StdError,
+    StdResult, Storage,
 };
 
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, QueryResponse};
 use crate::state::{config, config_read, State};
 
+use rand::prelude::*;
+
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    env: Env,
-    msg: InitMsg,
+    _env: Env,
+    _msg: InitMsg,
 ) -> StdResult<InitResponse> {
+    let random = rand::thread_rng().gen_range(0..25);
+
     let state = State {
-        board: [0; 10],
-        mine_index: 4,
+        board: [0; 25],
+        mine_index: random,
         player_a: None,
         player_b: None,
         turn: None,

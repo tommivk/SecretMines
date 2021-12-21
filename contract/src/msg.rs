@@ -23,5 +23,5 @@ pub enum QueryMsg {
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct QueryResponse {
-    pub board: [u8; 10],
+    pub board: [u8; 25],
 }
