@@ -33,7 +33,48 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Quess { index } => try_quess(deps, env, index),
-        HandleMsg::Join {} => Ok(HandleResponse::default()),
+        HandleMsg::Join {} => try_join(deps, env),
+    }
+}
+
+pub fn try_join<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let state = config_read(&deps.storage).load()?;
+    let sender = Some(env.message.sender.clone());
+
+    if state.player_a.is_some() && state.player_b.is_some() {
+        return Err(StdError::generic_err("Game is full!"));
+    }
+
+    if state.player_a == sender || state.player_b == sender {
+        return Err(StdError::generic_err("You have already joined!"));
+    }
+
+    if state.player_a.is_none() {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_a = sender.clone();
+            state.turn = sender;
+            Ok(state)
+        })?;
+
+        return Ok(HandleResponse {
+            messages: vec![],
+            log: vec![],
+            data: Some(to_binary("Welcome to secret mines")?),
+        });
+    } else {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_b = sender.clone();
+            state.turn = sender;
+            Ok(state)
+        })?;
+        return Ok(HandleResponse {
+            messages: vec![],
+            log: vec![],
+            data: Some(to_binary("Welcome to secret mines")?),
+        });
     }
 }
 
