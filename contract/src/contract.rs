@@ -6,18 +6,20 @@ use cosmwasm_std::{
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, QueryResponse};
 use crate::state::{config, config_read, State};
 
-use rand::prelude::*;
+use rand::{RngCore, SeedableRng};
+use rand_chacha::ChaChaRng;
+use sha2::{Digest, Sha256};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    let random = rand::thread_rng().gen_range(0..25);
-
+    let init_seed = [0_u8; 32];
+    deps.storage.set(b"seed", &init_seed);
     let state = State {
         board: [0; 25],
-        mine_index: random,
+        mine_index: None,
         player_a: None,
         player_b: None,
         turn: None,
@@ -48,6 +50,14 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
     let state = config_read(&deps.storage).load()?;
     let sender = Some(env.message.sender.clone());
 
+    let mut seed = deps.storage.get(b"seed").unwrap();
+    seed.extend(env.message.sender.to_string().as_bytes().to_vec());
+    seed.extend(env.block.chain_id.as_bytes().to_vec());
+    seed.extend(&env.block.height.to_be_bytes());
+    seed.extend(&env.block.time.to_be_bytes());
+    let new_seed: [u8; 32] = Sha256::digest(&seed).into();
+    deps.storage.set(b"seed", &new_seed);
+
     if state.player_a.is_some() && state.player_b.is_some() {
         return Err(StdError::generic_err("Game is full!"));
     }
@@ -69,9 +79,12 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
             data: Some(to_binary("Welcome to secret mines")?),
         });
     } else {
+        let mut rng = ChaChaRng::from_seed(new_seed);
+        let random = (rng.next_u32() % 25) as u8;
         config(&mut deps.storage).update(|mut state| {
             state.player_b = sender.clone();
             state.turn = sender;
+            state.mine_index = Some(random);
             Ok(state)
         })?;
         return Ok(HandleResponse {
