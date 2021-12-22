@@ -129,9 +129,9 @@ pub fn try_quess<S: Storage, A: Api, Q: Querier>(
         state.player_a
     };
 
-    if state.mine_index == index {
+    if state.mine_index.unwrap() == index {
         config(&mut deps.storage).update(|mut state| {
-            state.board[index as usize] = 1;
+            state.board[index as usize] = 2;
             state.game_over = true;
             state.winner = turn;
             state.last_quess = Some(index);
