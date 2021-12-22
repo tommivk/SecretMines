@@ -151,7 +151,11 @@ pub fn try_quess<S: Storage, A: Api, Q: Querier>(
         Ok(state)
     })?;
 
-    Ok(HandleResponse::default())
+    Ok(HandleResponse {
+        messages: vec![],
+        log: vec![],
+        data: Some(to_binary("Miss!")?),
+    })
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
@@ -165,5 +169,11 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 
 fn query_board<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
     let state = config_read(&deps.storage).load()?;
-    Ok(QueryResponse { board: state.board })
+    Ok(QueryResponse {
+        board: state.board,
+        game_over: state.game_over,
+        winner: state.winner,
+        player_a: state.player_a,
+        player_b: state.player_b,
+    })
 }
