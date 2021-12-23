@@ -10,7 +10,7 @@ const CODE_ID = 1;
 const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
-  const [board, setBoard] = useState([]);
+  const [gameState, setGameState] = useState(null);
   const [allGames, setAllGames] = useState([]);
   const [contractAddress, setContractAddress] = useState(null);
   const [gameName, setGameName] = useState("");
@@ -22,32 +22,30 @@ const App = () => {
       if (!account && mnemonic) {
         await getNewAccount(REST_URL, setSigningClient, setAccount, mnemonic);
       }
-      if (account) {
-        await getAllGames();
-        setTimeout(getAllGames, 0);
-        setInterval(getAllGames, 3000);
-      }
-      if (contractAddress) {
-        setTimeout(queryBoard, 0);
-        setInterval(queryBoard, 3000);
-      }
     };
     fetchData();
+
+    const allGamesPoll = setInterval(getAllGames, 2000);
+    const gamePoll = setInterval(queryGame, 2000);
+
+    return () => {
+      clearInterval(allGamesPoll);
+      clearInterval(gamePoll);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, contractAddress]);
 
-  const queryBoard = async () => {
+  const queryGame = async () => {
+    if (!contractAddress) return;
     try {
-      console.log("query board");
       const response = await signingClient?.queryContractSmart(
         contractAddress,
         {
           get_board: {},
         }
       );
-      console.log(response);
       if (response?.board) {
-        setBoard(response.board);
+        setGameState(response);
       }
     } catch (err) {
       console.log(err);
@@ -55,9 +53,9 @@ const App = () => {
   };
 
   const getAllGames = async () => {
+    if (!account) return;
     try {
       const response = await signingClient?.getContracts(CODE_ID);
-      console.log(response);
       setAllGames(response);
     } catch (error) {
       console.log(error);
@@ -116,17 +114,25 @@ const App = () => {
     localStorage.setItem("secretmines", JSON.stringify(account.mnemonic));
   };
 
+  const backToMenu = () => {
+    setContractAddress(null);
+    setGameState(null);
+  };
   return signingClient ? (
     <div>
       <p>Your account: {account?.address}</p>
       <div>
-        <button onClick={() => getAllGames()}>Refresh games</button>
+        {contractAddress ? (
+          <button onClick={() => backToMenu()}>Show all games</button>
+        ) : (
+          <button onClick={() => getAllGames()}>Refresh games</button>
+        )}
         <input
           onChange={({ target }) => setGameName(target.value)}
           placeholder="game name"
         ></input>
         <button onClick={() => instantiate()}>Create new game</button>
-        <button onClick={() => queryBoard()}>Query board</button>
+        <button onClick={() => queryGame()}>Query board</button>
         <button onClick={() => join()}>Join</button>
         <button onClick={() => quess()}>Quess</button>
       </div>
@@ -145,7 +151,12 @@ const App = () => {
       </div>
       {contractAddress && (
         <div className="board">
-          {board?.map((value, index) => (
+          {gameState?.player_a && (
+            <h5>
+              {gameState?.player_a} VS {gameState.player_b}
+            </h5>
+          )}
+          {gameState?.board?.map((value, index) => (
             <div
               key={index}
               className={`square ${value === 1 ? "green" : ""} ${
