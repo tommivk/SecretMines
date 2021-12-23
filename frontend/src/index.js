@@ -5,12 +5,13 @@ import setupKeplr from "./setupKeplr";
 import getNewAccount from "./newAccount";
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
-// const contractAddress = "secret18vd8fpwxzck93qlwghaj6arh4p7c5n8978vsyg";
-const contractAddress = "secret1hqrdl6wstt8qzshwc6mrumpjk9338k0lpsefm3";
+const contractAddress = "secret18vd8fpwxzck93qlwghaj6arh4p7c5n8978vsyg";
+// const contractAddress = "secret15gfn3tmx589z9l0h0n6mk0sunkn3864x2xt99d";
 
 const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
+  const [board, setBoard] = useState([]);
 
   const queryBoard = async () => {
     try {
@@ -21,6 +22,9 @@ const App = () => {
         }
       );
       console.log(response);
+      if (response?.board) {
+        setBoard(response.board);
+      }
     } catch (err) {
       console.log(err);
     }
@@ -36,12 +40,11 @@ const App = () => {
       console.log(err);
     }
   };
-  const [selectedNumber, setSelectedNumber] = useState(null);
 
-  const quess = async () => {
+  const quess = async (choice) => {
     try {
       const result = await signingClient?.execute(contractAddress, {
-        quess: { index: Number(selectedNumber) },
+        quess: { index: Number(choice) },
       });
       console.log("idn");
       console.log("aaa", { result });
@@ -65,17 +68,28 @@ const App = () => {
     localStorage.setItem("secretmines", JSON.stringify(account.mnemonic));
   };
 
+  console.log(board);
+
   return signingClient ? (
     <div>
       <p>Your account: {account?.address}</p>
       <div>
         <button onClick={() => queryBoard()}>Query board</button>
         <button onClick={() => join()}>Join</button>
-        <input
-          type="number"
-          onChange={({ target }) => setSelectedNumber(target.value)}
-        ></input>
         <button onClick={() => quess()}>Quess</button>
+      </div>
+      <div className="board">
+        {board?.map((value, index) => (
+          <div
+            key={index}
+            className={`square ${value === 1 ? "green" : ""} ${
+              value === 2 ? "red" : ""
+            }`}
+            onClick={() => quess(index)}
+          >
+            {index}
+          </div>
+        ))}
       </div>
     </div>
   ) : (
