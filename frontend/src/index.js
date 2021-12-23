@@ -15,8 +15,30 @@ const App = () => {
   const [contractAddress, setContractAddress] = useState(null);
   const [gameName, setGameName] = useState("");
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const storageItem = localStorage.getItem("secretmines");
+      const mnemonic = JSON.parse(storageItem);
+      if (!account && mnemonic) {
+        await getNewAccount(REST_URL, setSigningClient, setAccount, mnemonic);
+      }
+      if (account) {
+        await getAllGames();
+        setTimeout(getAllGames, 0);
+        setInterval(getAllGames, 3000);
+      }
+      if (contractAddress) {
+        setTimeout(queryBoard, 0);
+        setInterval(queryBoard, 3000);
+      }
+    };
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, contractAddress]);
+
   const queryBoard = async () => {
     try {
+      console.log("query board");
       const response = await signingClient?.queryContractSmart(
         contractAddress,
         {
@@ -73,8 +95,7 @@ const App = () => {
       const result = await signingClient?.execute(contractAddress, {
         quess: { index: Number(choice) },
       });
-      console.log("idn");
-      console.log("aaa", { result });
+      console.log(result);
     } catch (error) {
       console.log(error?.message);
     }
@@ -95,8 +116,6 @@ const App = () => {
     localStorage.setItem("secretmines", JSON.stringify(account.mnemonic));
   };
 
-  console.log(board);
-
   return signingClient ? (
     <div>
       <p>Your account: {account?.address}</p>
@@ -112,16 +131,17 @@ const App = () => {
         <button onClick={() => quess()}>Quess</button>
       </div>
       <div>
-        All games:
-        {allGames.map((game) => (
-          <div className="game-info" key={game.address}>
-            <p>Name: {game?.label}</p>
-            <p>Address: {game?.address}</p>
-            <button onClick={() => setContractAddress(game?.address)}>
-              Join
-            </button>
-          </div>
-        ))}
+        All games
+        {!contractAddress &&
+          allGames.map((game) => (
+            <div className="game-info" key={game.address}>
+              <p>Name: {game?.label}</p>
+              <p>Address: {game?.address}</p>
+              <button onClick={() => setContractAddress(game?.address)}>
+                Join
+              </button>
+            </div>
+          ))}
       </div>
       {contractAddress && (
         <div className="board">
