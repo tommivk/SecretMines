@@ -5,13 +5,15 @@ import setupKeplr from "./setupKeplr";
 import getNewAccount from "./newAccount";
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
-const contractAddress = "secret18vd8fpwxzck93qlwghaj6arh4p7c5n8978vsyg";
-// const contractAddress = "secret15gfn3tmx589z9l0h0n6mk0sunkn3864x2xt99d";
+const CODE_ID = 1;
 
 const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
   const [board, setBoard] = useState([]);
+  const [allGames, setAllGames] = useState([]);
+  const [contractAddress, setContractAddress] = useState(null);
+  const [gameName, setGameName] = useState("");
 
   const queryBoard = async () => {
     try {
@@ -27,6 +29,31 @@ const App = () => {
       }
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const getAllGames = async () => {
+    try {
+      const response = await signingClient?.getContracts(CODE_ID);
+      console.log(response);
+      setAllGames(response);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const instantiate = async () => {
+    try {
+      const response = await signingClient.instantiate(
+        CODE_ID,
+        {
+          CreateGame: {},
+        },
+        gameName
+      );
+      console.log(response);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -74,23 +101,43 @@ const App = () => {
     <div>
       <p>Your account: {account?.address}</p>
       <div>
+        <button onClick={() => getAllGames()}>Refresh games</button>
+        <input
+          onChange={({ target }) => setGameName(target.value)}
+          placeholder="game name"
+        ></input>
+        <button onClick={() => instantiate()}>Create new game</button>
         <button onClick={() => queryBoard()}>Query board</button>
         <button onClick={() => join()}>Join</button>
         <button onClick={() => quess()}>Quess</button>
       </div>
-      <div className="board">
-        {board?.map((value, index) => (
-          <div
-            key={index}
-            className={`square ${value === 1 ? "green" : ""} ${
-              value === 2 ? "red" : ""
-            }`}
-            onClick={() => quess(index)}
-          >
-            {index}
+      <div>
+        All games:
+        {allGames.map((game) => (
+          <div className="game-info" key={game.address}>
+            <p>Name: {game?.label}</p>
+            <p>Address: {game?.address}</p>
+            <button onClick={() => setContractAddress(game?.address)}>
+              Join
+            </button>
           </div>
         ))}
       </div>
+      {contractAddress && (
+        <div className="board">
+          {board?.map((value, index) => (
+            <div
+              key={index}
+              className={`square ${value === 1 ? "green" : ""} ${
+                value === 2 ? "red" : ""
+              }`}
+              onClick={() => quess(index)}
+            >
+              {index}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   ) : (
     <div>

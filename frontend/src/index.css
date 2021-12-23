@@ -35,3 +35,13 @@ code {
 .square.green {
   background: greenyellow;
 }
+
+.game-info {
+  margin: auto;
+  margin-bottom: 5px;
+  background: rgb(63, 52, 52);
+  padding: 5px 10px;
+  width: fit-content;
+  border-radius: 10px;
+  color: white;
+}
