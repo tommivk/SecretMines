@@ -175,5 +175,6 @@ fn query_board<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
         winner: state.winner,
         player_a: state.player_a,
         player_b: state.player_b,
+        turn: state.turn,
     })
 }
