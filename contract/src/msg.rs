@@ -28,5 +28,7 @@ pub struct QueryResponse {
     pub winner: Option<HumanAddr>,
     pub player_a: Option<HumanAddr>,
     pub player_b: Option<HumanAddr>,
+    pub player_a_wants_rematch: bool,
+    pub player_b_wants_rematch: bool,
     pub turn: Option<HumanAddr>,
 }
