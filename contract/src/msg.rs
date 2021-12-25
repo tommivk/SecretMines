@@ -12,6 +12,7 @@ pub enum InitMsg {
 pub enum HandleMsg {
     Quess { index: u8 },
     Join {},
+    Rematch {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

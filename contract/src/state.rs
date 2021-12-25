@@ -12,6 +12,8 @@ pub struct State {
     pub mine_index: Option<u8>,
     pub player_a: Option<HumanAddr>,
     pub player_b: Option<HumanAddr>,
+    pub player_a_wants_rematch: bool,
+    pub player_b_wants_rematch: bool,
     pub turn: Option<HumanAddr>,
     pub last_quess: Option<u8>,
     pub game_over: bool,

@@ -22,6 +22,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         mine_index: None,
         player_a: None,
         player_b: None,
+        player_a_wants_rematch: false,
+        player_b_wants_rematch: false,
         turn: None,
         last_quess: None,
         game_over: false,
@@ -40,7 +42,73 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     match msg {
         HandleMsg::Quess { index } => try_quess(deps, env, index),
         HandleMsg::Join {} => try_join(deps, env),
+        HandleMsg::Rematch {} => try_rematch(deps, env),
     }
+}
+
+pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let state = config_read(&deps.storage).load()?;
+    let sender = Some(env.message.sender.clone());
+
+    if !state.game_over {
+        return Err(StdError::generic_err("Game not finished yet!"));
+    }
+
+    if state.player_a.is_none() || state.player_b.is_none() {
+        return Err(StdError::generic_err("Game not started yet!"));
+    }
+
+    if sender != state.player_a || sender != state.player_b {
+        return Err(StdError::generic_err("You are not a player!"));
+    }
+
+    if sender == state.player_a {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_a_wants_rematch = true;
+            Ok(state)
+        })?;
+    }
+    if sender == state.player_b {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_b_wants_rematch = true;
+            Ok(state)
+        })?;
+    }
+
+    if state.player_a_wants_rematch && state.player_b_wants_rematch {
+        let mut seed = deps.storage.get(b"seed").unwrap();
+        seed.extend(&env.block.height.to_be_bytes());
+        seed.extend(&env.block.time.to_be_bytes());
+
+        let new_seed: [u8; 32] = Sha256::digest(&seed).into();
+        deps.storage.set(b"seed", &new_seed);
+
+        let mut rng = ChaChaRng::from_seed(new_seed);
+        let random = (rng.next_u32() % 25) as u8;
+
+        config(&mut deps.storage).update(|mut state| {
+            state.board = [0; 25];
+            state.mine_index = Some(random);
+            state.player_a = state.player_a;
+            state.player_b = state.player_b;
+            state.player_a_wants_rematch = false;
+            state.player_b_wants_rematch = false;
+            state.turn = state.winner;
+            state.last_quess = None;
+            state.game_over = false;
+            state.winner = None;
+            Ok(state)
+        })?;
+    }
+
+    return Ok(HandleResponse {
+        messages: vec![],
+        log: vec![],
+        data: Some(to_binary("Ok")?),
+    });
 }
 
 pub fn try_join<S: Storage, A: Api, Q: Querier>(
