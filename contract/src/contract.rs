@@ -61,7 +61,7 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err("Game not started yet!"));
     }
 
-    if sender != state.player_a || sender != state.player_b {
+    if sender != state.player_a && sender != state.player_b {
         return Err(StdError::generic_err("You are not a player!"));
     }
 
