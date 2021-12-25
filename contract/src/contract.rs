@@ -69,7 +69,6 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
     if state.player_a.is_none() {
         config(&mut deps.storage).update(|mut state| {
             state.player_a = sender.clone();
-            state.turn = sender;
             Ok(state)
         })?;
 
