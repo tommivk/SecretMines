@@ -66,7 +66,7 @@ const getNewAccount = async (
     customFees
   );
   setSigningClient(signingClient);
-  setAccount(account);
+  setAccount({ ...account, address: accAddress });
   return { mnemonic, accAddress };
 };
 
