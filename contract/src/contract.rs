@@ -86,6 +86,8 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
         })?;
     }
 
+    let state = config_read(&deps.storage).load()?;
+
     if state.player_a_wants_rematch && state.player_b_wants_rematch {
         let mut seed = deps.storage.get(b"seed").unwrap();
         seed.extend(&env.block.height.to_be_bytes());
