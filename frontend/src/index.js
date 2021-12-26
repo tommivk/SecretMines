@@ -24,39 +24,26 @@ const App = () => {
       }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const allGamesPoll = setInterval(getAllGames, 2000);
-    const gamePoll = setInterval(queryGame, 2000);
+  useEffect(() => {
+    const allGamesPoll = setInterval(getAllGames, 1000);
 
     return () => {
       clearInterval(allGamesPoll);
-      clearInterval(gamePoll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, contractAddress]);
 
-  const queryGame = async () => {
-    if (!contractAddress) return;
-    try {
-      const response = await signingClient?.queryContractSmart(
-        contractAddress,
-        {
-          get_board: {},
-        }
-      );
-      if (response?.board) {
-        setGameState(response);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  console.log(account);
+  console.log(signingClient);
 
   const getAllGames = async () => {
     if (!account) return;
     try {
       const response = await signingClient?.getContracts(CODE_ID);
-      setAllGames(response);
+      setAllGames(response.reverse());
     } catch (error) {
       console.log(error);
     }
