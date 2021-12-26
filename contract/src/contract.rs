@@ -65,6 +65,14 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err("You are not a player!"));
     }
 
+    if (sender == state.player_a && state.player_a_wants_rematch)
+        || (sender == state.player_b && state.player_b_wants_rematch)
+    {
+        return Err(StdError::generic_err(
+            "You have already requested a rematch",
+        ));
+    }
+
     if sender == state.player_a {
         config(&mut deps.storage).update(|mut state| {
             state.player_a_wants_rematch = true;
