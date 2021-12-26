@@ -5,6 +5,10 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(120deg, rgb(15, 3, 44) 0%, rgb(7, 105, 89) 100%);
+  color: white;
+  min-height: 100vh;
+  height: 100vh;
 }
 
 code {
@@ -17,31 +21,150 @@ code {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  margin: auto;
+  margin-top: 40px;
+  background-color: rgba(29, 28, 28, 0.3);
+  padding: 15px;
 }
 
 .square {
   width: 60px;
   height: 60px;
-  background: rgb(233, 229, 229);
+  background: rgb(48, 33, 33);
+  /* background-image: url("./images/scrt.svg"); */
+  background-size: contain;
   margin: 5px;
-  border: 2px solid black;
+  border: 2px solid rgb(51, 46, 46);
   box-sizing: border-box;
+  cursor: pointer;
+}
+
+.square:hover {
+  box-shadow: 0px 0px 5px rgb(228, 222, 222);
 }
 
 .square.red {
-  background: rgb(236, 5, 5);
+  background-image: url("./images/bomb.png");
+  background-size: cover;
 }
 
 .square.green {
-  background: greenyellow;
+  background-image: url("./images/flower.png");
+  background-size: cover;
 }
 
 .game-info {
   margin: auto;
   margin-bottom: 5px;
-  background: rgb(63, 52, 52);
+  background: #2a2323;
   padding: 5px 10px;
   width: 450px;
   border-radius: 10px;
   color: white;
+}
+
+.game-container {
+  margin: auto;
+  width: fit-content;
+  text-align: center;
+}
+
+.game-creation {
+  margin: auto;
+  margin-top: 50px;
+  margin-bottom: 30px;
+  width: fit-content;
+}
+
+.game-creation input {
+  padding: 12px;
+  width: 250px;
+  border-radius: 5px 0px 0px 5px;
+  border: none;
+  box-sizing: border-box;
+}
+
+.game-creation input:focus {
+  outline: none;
+}
+.game-creation button {
+  padding: 12px 10px;
+  background: rgb(6, 155, 130);
+  border: none;
+  box-sizing: border-box;
+  color: white;
+  border-radius: 0px 5px 5px 0px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.game-creation button:hover {
+  background: rgb(12, 192, 162);
+}
+
+.no-games-text {
+  width: fit-content;
+  margin: auto;
+}
+
+.account-details {
+  padding: 0px 16px;
+}
+
+.account-balance {
+  float: right;
+}
+
+.loading-game-text {
+  margin: auto;
+  width: fit-content;
+  margin-top: 100px;
+}
+
+.wallet-connect-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.wallet-connect-container .temporary-connect,
+.keplr-connect {
+  width: 230px;
+  height: 230px;
+  background: rgb(12, 117, 112);
+  font-size: 1.1em;
+  font-weight: bold;
+  margin: 30px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: font-size 0.6s;
+}
+
+.wallet-connect-container .temporary-connect:hover,
+.keplr-connect:hover {
+  background: rgb(41, 44, 44);
+  font-size: 1.15em;
+}
+
+.show-all-games-button {
+  margin-left: 16px;
+}
+
+.join-button,
+.show-all-games-button,
+.rematch-button {
+  padding: 10px 20px;
+  box-sizing: border-box;
+  border: none;
+  background: rgb(51, 48, 48);
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.join-button:hover,
+.show-all-games-button:hover,
+.rematch-button:hover {
+  background: rgb(14, 160, 111);
 }
