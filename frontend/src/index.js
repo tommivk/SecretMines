@@ -8,6 +8,7 @@ import Game from "./game";
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
 const CODE_ID = 1;
+const SECRET_WS_URL = "ws://localhost:26657/websocket";
 
 const App = () => {
   const [account, setAccount] = useState(null);
@@ -17,31 +18,64 @@ const App = () => {
   const [gameName, setGameName] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAccount = async () => {
       const storageItem = localStorage.getItem("secretmines");
       const mnemonic = JSON.parse(storageItem);
       if (!account && mnemonic) {
         await getNewAccount(REST_URL, setSigningClient, setAccount, mnemonic);
       }
     };
-    fetchData();
+    fetchAccount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const allGamesPoll = setInterval(getAllGames, 1000);
-
-    return () => {
-      clearInterval(allGamesPoll);
+    const fetchGames = async () => {
+      await getAllGames();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, contractAddress]);
+    fetchGames();
 
-  console.log(account);
-  console.log(signingClient);
+    const webSocket = new WebSocket(SECRET_WS_URL);
+
+    // listen for contract instatiations
+    const query = `message.module='compute' AND message.action='instantiate'`;
+
+    webSocket.onopen = () => {
+      webSocket.send(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          method: "subscribe",
+          params: {
+            query,
+          },
+          id: "gameInstantiate", // jsonrpc id
+        })
+      );
+    };
+    webSocket.onmessage = async (message) => {
+      const data = JSON.parse(message.data);
+      console.log(data);
+      //update games list when new contract is instantiated
+      if (data.id === "gameInstantiate") {
+        await getAllGames();
+      }
+    };
+
+    webSocket.onclose = () => {
+      console.log("Websocket connection closed");
+    };
+
+    webSocket.onerror = (error) => {
+      console.log(`[error] ${error.message}`);
+    };
+
+    return () => webSocket.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signingClient]);
 
   const getAllGames = async () => {
-    if (!account) return;
+    console.log("getAllGames client:", signingClient);
+    if (!signingClient) return;
     try {
       const response = await signingClient?.getContracts(CODE_ID);
       setAllGames(response.reverse());
@@ -165,6 +199,7 @@ const App = () => {
         contractAddress={contractAddress}
         account={account}
         signingClient={signingClient}
+        SECRET_WS_URL={SECRET_WS_URL}
       />
     </div>
   );

@@ -1,20 +1,54 @@
 import React, { useEffect, useState } from "react";
 
-const Game = ({ contractAddress, account, signingClient }) => {
+const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
   const [gameState, setGameState] = useState(null);
-  const [gamePoll, setGamePoll] = useState(null);
 
   useEffect(() => {
-    setGameState(null);
-    clearInterval(gamePoll);
+    queryGame();
 
-    setGamePoll(setInterval(queryGame, 1000));
+    const webSocket = new WebSocket(SECRET_WS_URL);
+    console.log("socket: ", webSocket);
 
-    return () => {
-      clearInterval(gamePoll);
+    webSocket.onopen = function (e) {
+      console.log("WebSocket connection established");
+
+      // listen for compute events with contract address
+      let query = `message.module='compute' AND message.contract_address='${contractAddress}'`;
+
+      console.log(query);
+
+      webSocket.send(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          method: "subscribe",
+          params: {
+            query,
+          },
+          id: "gameUpdate", // jsonrpc id
+        })
+      );
     };
+
+    webSocket.onmessage = async (message) => {
+      const data = JSON.parse(message.data);
+      console.log(data);
+      //update game state
+      if (data.id === "gameUpdate") {
+        await queryGame();
+      }
+    };
+
+    webSocket.onclose = () => {
+      console.log("WebSocket connection closed");
+    };
+
+    webSocket.onerror = (error) => {
+      console.log(`WebSocket error: ${error.message}`);
+    };
+
+    return () => webSocket.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, contractAddress]);
+  }, [contractAddress]);
 
   const requestRematch = () => {
     try {
@@ -96,11 +130,6 @@ const Game = ({ contractAddress, account, signingClient }) => {
     }
   };
 
-  if (!contractAddress) return null;
-  if (!gameState?.board) {
-    return <p className="loading-game-text">Loading game...</p>;
-  }
-
   const getRematchStatus = () => {
     const player = account?.address;
     if (
@@ -135,6 +164,11 @@ const Game = ({ contractAddress, account, signingClient }) => {
       );
     }
   };
+
+  if (!contractAddress) return null;
+  if (!gameState?.board) {
+    return <p className="loading-game-text">Loading game...</p>;
+  }
 
   return (
     <div className="game-container">
