@@ -2,6 +2,30 @@ import React, { useEffect, useState } from "react";
 
 const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
   const [gameState, setGameState] = useState(null);
+  const [gameBoard, setGameBoard] = useState(
+    Array(25).fill({ value: 0, active: false })
+  );
+  const [gradientAngle, setGradientAngle] = useState(0);
+
+  useEffect(() => {
+    if (gameState?.board) {
+      let newArray = gameBoard.map(
+        (val, index) => (val = { ...val, value: gameState?.board[index] })
+      );
+      setGameBoard(newArray);
+      console.log(newArray);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGradientAngle((prevAngle) =>
+        prevAngle + 5 > 360 ? 0 : prevAngle + 5
+      );
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     queryGame();
@@ -62,12 +86,15 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
 
   const quess = async (choice) => {
     try {
+      gameBoard[choice].active = true;
       const result = await signingClient?.execute(contractAddress, {
         quess: { index: Number(choice) },
       });
       console.log(result);
+      gameBoard[choice].active = false;
     } catch (error) {
       console.log(error?.message);
+      gameBoard[choice].active = false;
     }
   };
 
@@ -180,14 +207,23 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
         {gameState?.player_b ? gameState?.player_b : "Waiting for player"}
       </h4>
       <div className="board">
-        {gameState?.board?.map((value, index) => (
+        {gameBoard.map((value, index) => (
           <div
-            key={index}
-            className={`square ${value === 1 ? "green" : ""} ${
-              value === 2 ? "red" : ""
-            }`}
-            onClick={() => quess(index)}
-          ></div>
+            className={`gradient-border ${value.active ? "active" : ""}`}
+            style={{
+              background: value.active
+                ? `linear-gradient(${gradientAngle}deg,rgb(134 0 173) 50%, rgb(4 237 224) 98%)`
+                : "none",
+            }}
+          >
+            <div
+              key={index}
+              className={`square ${value.value === 1 ? "green" : ""} ${
+                value.value === 2 ? "red" : ""
+              } ${value.active ? "active" : ""}`}
+              onClick={() => quess(index)}
+            ></div>
+          </div>
         ))}
       </div>
       <div>{getStatusLabel()}</div>

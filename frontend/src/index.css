@@ -28,19 +28,25 @@ code {
 }
 
 .square {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   background: rgb(48, 33, 33);
-  /* background-image: url("./images/scrt.svg"); */
   background-size: contain;
-  margin: 5px;
-  border: 2px solid rgb(51, 46, 46);
   box-sizing: border-box;
   cursor: pointer;
 }
 
-.square:hover {
+.gradient-border .square:hover:not(.active) {
   box-shadow: 0px 0px 5px rgb(228, 222, 222);
+}
+
+.gradient-border.active {
+  box-shadow: 0px 0px 5px rgba(228, 222, 222, 0.5);
+}
+
+.gradient-border {
+  padding: 2px;
+  margin: 5px;
 }
 
 .square.red {
