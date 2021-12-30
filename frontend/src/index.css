@@ -8,7 +8,7 @@ body {
   background: linear-gradient(120deg, rgb(15, 3, 44) 0%, rgb(7, 105, 89) 100%);
   color: white;
   min-height: 100vh;
-  height: 100vh;
+  height: 100%;
 }
 
 code {
@@ -67,6 +67,38 @@ code {
   width: 450px;
   border-radius: 10px;
   color: white;
+  position: relative;
+  cursor: pointer;
+}
+
+.game-info:hover .game-number {
+  background: rgb(6, 155, 130);
+}
+
+.game-number {
+  height: 30px;
+  min-width: 30px;
+  width: fit-content;
+  padding: 5px;
+  background: rgb(43, 44, 49);
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  border-radius: 10px 0px 0px 0px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.game-name {
+  text-align: center;
+  margin: 8px;
+}
+
+.game-address {
+  text-align: center;
+  margin: 20px;
 }
 
 .game-container {

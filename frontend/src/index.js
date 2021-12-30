@@ -179,13 +179,15 @@ const App = () => {
               <button onClick={() => instantiate()}>Create new game</button>
             </div>
             {allGames &&
-              allGames.map((game) => (
-                <div className="game-info" key={game.address}>
-                  <p>Name: {game?.label}</p>
-                  <p>Address: {game?.address}</p>
-                  <button onClick={() => setContractAddress(game?.address)}>
-                    View
-                  </button>
+              allGames.map((game, index) => (
+                <div
+                  className="game-info"
+                  key={game.address}
+                  onClick={() => setContractAddress(game?.address)}
+                >
+                  <div className="game-number"># {allGames.length - index}</div>
+                  <h2 className="game-name">{game?.label}</h2>
+                  <p className="game-address">{game?.address}</p>
                 </div>
               ))}
           </>
