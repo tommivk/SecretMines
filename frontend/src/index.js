@@ -4,6 +4,9 @@ import "./index.css";
 import setupKeplr from "./setupKeplr";
 import getNewAccount from "./newAccount";
 import Game from "./game";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
@@ -16,6 +19,7 @@ const App = () => {
   const [allGames, setAllGames] = useState(null);
   const [contractAddress, setContractAddress] = useState(null);
   const [gameName, setGameName] = useState("");
+  const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -86,6 +90,7 @@ const App = () => {
 
   const instantiate = async () => {
     try {
+      setIsCreateGameLoading(true);
       const response = await signingClient.instantiate(
         CODE_ID,
         {
@@ -95,8 +100,10 @@ const App = () => {
       );
       console.log(response);
       setGameName("");
+      setIsCreateGameLoading(false);
     } catch (error) {
       console.log(error);
+      setIsCreateGameLoading(false);
     }
   };
 
@@ -153,7 +160,13 @@ const App = () => {
   return (
     <div>
       <p className="account-details">
-        Your address: {account?.address}
+        Your address:{" "}
+        <span className="account-address">{account?.address}</span>
+        <FontAwesomeIcon
+          className="copy-icon"
+          icon={faCopy}
+          onClick={() => navigator.clipboard.writeText(account?.address)}
+        />
         <span className="account-balance">Balance: {getBalance()}</span>
       </p>
 
@@ -176,7 +189,13 @@ const App = () => {
                 onChange={({ target }) => setGameName(target.value)}
                 placeholder="game name"
               ></input>
-              <button onClick={() => instantiate()}>Create new game</button>
+              <button onClick={instantiate}>
+                {isCreateGameLoading ? (
+                  <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+                ) : (
+                  "Create New Game"
+                )}
+              </button>
             </div>
             {allGames &&
               allGames.map((game, index) => (

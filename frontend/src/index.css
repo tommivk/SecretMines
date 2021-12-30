@@ -127,6 +127,7 @@ code {
 }
 .game-creation button {
   padding: 12px 10px;
+  min-width: 131px;
   background: rgb(6, 155, 130);
   border: none;
   box-sizing: border-box;
@@ -189,6 +190,10 @@ code {
   margin-left: 16px;
 }
 
+.join-button {
+  min-width: 105px;
+}
+
 .join-button,
 .show-all-games-button,
 .rematch-button {
@@ -205,4 +210,19 @@ code {
 .show-all-games-button:hover,
 .rematch-button:hover {
   background: rgb(14, 160, 111);
+}
+
+.copy-icon {
+  margin-left: 8px;
+  color: rgb(231, 220, 220);
+  cursor: pointer;
+}
+
+.account-address {
+  color: rgb(14, 182, 204);
+}
+
+.copy-icon:hover {
+  color: rgb(14, 182, 204);
+  box-shadow: 0px 0px 10px white;
 }

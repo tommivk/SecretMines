@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
   const [gameState, setGameState] = useState(null);
@@ -6,6 +8,8 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
     Array(25).fill({ value: 0, active: false })
   );
   const [gradientAngle, setGradientAngle] = useState(0);
+  const [joinGameIsLoading, setJoinGameIsLoading] = useState(false);
+  const [rematchRequestIsLoading, setRematchRequestIsLoading] = useState(false);
 
   useEffect(() => {
     if (gameState?.board) {
@@ -74,13 +78,16 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractAddress]);
 
-  const requestRematch = () => {
+  const requestRematch = async () => {
     try {
-      signingClient.execute(contractAddress, {
+      setRematchRequestIsLoading(true);
+      await signingClient.execute(contractAddress, {
         rematch: {},
       });
+      setRematchRequestIsLoading(false);
     } catch (error) {
       console.log(error?.message);
+      setRematchRequestIsLoading(false);
     }
   };
 
@@ -117,12 +124,15 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
 
   const join = async () => {
     try {
+      setJoinGameIsLoading(true);
       const response = await signingClient?.execute(contractAddress, {
         join: {},
       });
       console.log("res", response);
+      setJoinGameIsLoading(false);
     } catch (err) {
       console.log(err);
+      setJoinGameIsLoading(false);
     }
   };
 
@@ -167,7 +177,11 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
         <div>
           <p>Your opponent requested a rematch</p>
           <button className="rematch-button" onClick={() => requestRematch()}>
-            Rematch
+            {rematchRequestIsLoading ? (
+              <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+            ) : (
+              "Rematch"
+            )}
           </button>
         </div>
       );
@@ -186,7 +200,11 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
     ) {
       return (
         <button className="rematch-button" onClick={() => requestRematch()}>
-          Rematch
+          {rematchRequestIsLoading ? (
+            <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+          ) : (
+            "Rematch"
+          )}
         </button>
       );
     }
@@ -230,7 +248,11 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
       {gameState?.game_over && <div>{getRematchStatus()}</div>}
       {!gameState?.player_b && gameState?.player_a !== account?.address && (
         <button className="join-button" onClick={() => join()}>
-          Join Game
+          {joinGameIsLoading ? (
+            <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+          ) : (
+            "Join Game"
+          )}
         </button>
       )}
     </div>
