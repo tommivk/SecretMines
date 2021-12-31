@@ -223,6 +223,44 @@ code {
 }
 
 .copy-icon:hover {
-  color: rgb(14, 182, 204);
-  box-shadow: 0px 0px 10px white;
+  box-shadow: 0px 0px 15px rgb(14, 182, 204);
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 0px 15px;
+  box-sizing: border-box;
+  min-width: 300px;
+  min-height: 60px;
+  height: fit-content;
+  width: fit-content;
+  background: rgba(255, 0, 0, 0.6);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  max-width: 500px;
+}
+
+.notification.success {
+  background: rgba(2, 118, 196, 0.6);
+}
+
+.notification:not(.success) {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" style="font-size: 18px;"><text y="15">😬</text></svg>'),
+    auto;
+}
+
+.notification-text {
+  text-align: center;
+  word-break: break-word;
+  padding: 10px 10px;
+  width: 100%;
+}
+
+.notification-icon {
+  font-size: 30px;
 }

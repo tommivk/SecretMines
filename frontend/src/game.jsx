@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
+const Game = ({
+  contractAddress,
+  account,
+  signingClient,
+  SECRET_WS_URL,
+  handleNewNotification,
+}) => {
   const [gameState, setGameState] = useState(null);
   const [gameBoard, setGameBoard] = useState(
     Array(25).fill({ value: 0, active: false })
@@ -102,6 +108,28 @@ const Game = ({ contractAddress, account, signingClient, SECRET_WS_URL }) => {
     } catch (error) {
       console.log(error?.message);
       gameBoard[choice].active = false;
+
+      if (error.message.toLowerCase().includes("you're not a player")) {
+        return handleNewNotification("You are not a player!");
+      }
+
+      if (error.message.toLowerCase().includes("not your turn")) {
+        return handleNewNotification("It's not your turn");
+      }
+
+      if (error.message.toLowerCase().includes("already quessed")) {
+        return handleNewNotification("The square has already been quessed!");
+      }
+
+      if (error.message.toLowerCase().includes("game is over")) {
+        return handleNewNotification("The game is over!");
+      }
+
+      if (!gameState?.player_b) {
+        return handleNewNotification("The game is not started yet!");
+      }
+
+      handleNewNotification(error.message);
     }
   };
 

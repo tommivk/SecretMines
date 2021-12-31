@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import setupKeplr from "./setupKeplr";
@@ -7,6 +7,7 @@ import Game from "./game";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
@@ -20,6 +21,13 @@ const App = () => {
   const [contractAddress, setContractAddress] = useState(null);
   const [gameName, setGameName] = useState("");
   const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationData, setNotificationData] = useState({
+    text: "",
+    type: "",
+  });
+
+  let notificationRef = useRef(null);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -77,6 +85,21 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signingClient]);
 
+  const handleNewNotification = (text, type) => {
+    if (notificationRef.current) {
+      clearTimeout(notificationRef.current);
+    }
+
+    setNotificationData({ text, type });
+    setShowNotification(true);
+
+    const timeout = setTimeout(() => {
+      setShowNotification(false);
+    }, 8000);
+
+    notificationRef.current = timeout;
+  };
+
   const getAllGames = async () => {
     console.log("getAllGames client:", signingClient);
     if (!signingClient) return;
@@ -89,6 +112,7 @@ const App = () => {
   };
 
   const instantiate = async () => {
+    if (isCreateGameLoading || gameName.trim() === "") return;
     try {
       setIsCreateGameLoading(true);
       const response = await signingClient.instantiate(
@@ -99,11 +123,20 @@ const App = () => {
         gameName
       );
       console.log(response);
+      handleNewNotification(`New game ${gameName} created!`, "success");
       setGameName("");
       setIsCreateGameLoading(false);
     } catch (error) {
       console.log(error);
       setIsCreateGameLoading(false);
+      if (
+        error.message.toLowerCase().includes("contract account already exists")
+      ) {
+        return handleNewNotification(
+          "A game with the same name already exists"
+        );
+      }
+      handleNewNotification(error.message);
     }
   };
 
@@ -159,13 +192,32 @@ const App = () => {
 
   return (
     <div>
+      {showNotification && (
+        <div
+          className={`notification  ${
+            notificationData.type === "success" ? "success" : ""
+          }`}
+          onClick={() => setShowNotification(false)}
+        >
+          <div className="notification-icon">
+            <FontAwesomeIcon
+              className="notification-icon"
+              icon={faExclamationCircle}
+            />
+          </div>
+          <div className="notification-text">{notificationData?.text}</div>
+        </div>
+      )}
       <p className="account-details">
         Your address:{" "}
         <span className="account-address">{account?.address}</span>
         <FontAwesomeIcon
           className="copy-icon"
           icon={faCopy}
-          onClick={() => navigator.clipboard.writeText(account?.address)}
+          onClick={() => {
+            navigator.clipboard.writeText(account?.address);
+            handleNewNotification("Address copied!", "success");
+          }}
         />
         <span className="account-balance">Balance: {getBalance()}</span>
       </p>
@@ -221,6 +273,7 @@ const App = () => {
         account={account}
         signingClient={signingClient}
         SECRET_WS_URL={SECRET_WS_URL}
+        handleNewNotification={handleNewNotification}
       />
     </div>
   );
