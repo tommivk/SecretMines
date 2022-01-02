@@ -1,12 +1,12 @@
 import React from "react";
 
-const GameList = ({ allGames, setContractAddress }) => {
+const GameList = ({ allGames, setGameData }) => {
   if (!allGames) return null;
   return allGames.map((game, index) => (
     <div
       className="game-info"
       key={game.address}
-      onClick={() => setContractAddress(game?.address)}
+      onClick={() => setGameData(game)}
     >
       <div className="game-number"># {allGames.length - index}</div>
       <h2 className="game-name">{game?.label}</h2>

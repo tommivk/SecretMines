@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const Game = ({
-  contractAddress,
+  gameData,
   account,
   signingClient,
   SECRET_WS_URL,
@@ -47,7 +47,7 @@ const Game = ({
       console.log("WebSocket connection established");
 
       // listen for compute events with contract address
-      let query = `message.module='compute' AND message.contract_address='${contractAddress}'`;
+      let query = `message.module='compute' AND message.contract_address='${gameData?.address}'`;
 
       console.log(query);
 
@@ -82,12 +82,13 @@ const Game = ({
 
     return () => webSocket.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contractAddress]);
+  }, [gameData]);
 
   const requestRematch = async () => {
+    if (!gameData?.address) return;
     try {
       setRematchRequestIsLoading(true);
-      await signingClient.execute(contractAddress, {
+      await signingClient.execute(gameData?.address, {
         rematch: {},
       });
       setRematchRequestIsLoading(false);
@@ -98,9 +99,10 @@ const Game = ({
   };
 
   const quess = async (choice) => {
+    if (!gameData?.address) return;
     try {
       gameBoard[choice].active = true;
-      const result = await signingClient?.execute(contractAddress, {
+      const result = await signingClient?.execute(gameData.address, {
         quess: { index: Number(choice) },
       });
       console.log(result);
@@ -134,10 +136,10 @@ const Game = ({
   };
 
   const queryGame = async () => {
-    if (!contractAddress) return;
+    if (!gameData?.address) return;
     try {
       const response = await signingClient?.queryContractSmart(
-        contractAddress,
+        gameData.address,
         {
           get_board: {},
         }
@@ -151,9 +153,10 @@ const Game = ({
   };
 
   const join = async () => {
+    if (!gameData?.address) return;
     try {
       setJoinGameIsLoading(true);
-      const response = await signingClient?.execute(contractAddress, {
+      const response = await signingClient?.execute(gameData.address, {
         join: {},
       });
       console.log("res", response);

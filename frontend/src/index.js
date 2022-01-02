@@ -19,7 +19,7 @@ const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
   const [allGames, setAllGames] = useState(null);
-  const [contractAddress, setContractAddress] = useState(null);
+  const [gameData, setGameData] = useState(null);
   const [gameName, setGameName] = useState("");
   const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -157,7 +157,7 @@ const App = () => {
   };
 
   const backToMenu = () => {
-    setContractAddress(null);
+    setGameData(null);
   };
 
   if (!signingClient) {
@@ -186,7 +186,7 @@ const App = () => {
         handleNewNotification={handleNewNotification}
       />
       <div>
-        {contractAddress && (
+        {gameData && (
           <button
             className="show-all-games-button"
             onClick={() => backToMenu()}
@@ -196,7 +196,7 @@ const App = () => {
         )}
       </div>
       <div>
-        {!contractAddress && (
+        {!gameData && (
           <>
             <div className="game-creation">
               <input
@@ -212,10 +212,7 @@ const App = () => {
                 )}
               </button>
             </div>
-            <GameList
-              allGames={allGames}
-              setContractAddress={setContractAddress}
-            />
+            <GameList allGames={allGames} setGameData={setGameData} />
           </>
         )}
         {!allGames && <p className="no-games-text">Loading games...</p>}
@@ -224,7 +221,7 @@ const App = () => {
         )}
       </div>
       <Game
-        contractAddress={contractAddress}
+        gameData={gameData}
         account={account}
         signingClient={signingClient}
         SECRET_WS_URL={SECRET_WS_URL}
