@@ -119,17 +119,6 @@ code {
   width: fit-content;
 }
 
-.game-creation input {
-  padding: 12px;
-  width: 250px;
-  border-radius: 5px 0px 0px 5px;
-  border: none;
-  box-sizing: border-box;
-}
-
-.game-creation input:focus {
-  outline: none;
-}
 .game-creation button {
   padding: 12px 10px;
   min-width: 131px;
@@ -137,7 +126,7 @@ code {
   border: none;
   box-sizing: border-box;
   color: white;
-  border-radius: 0px 5px 5px 0px;
+  border-radius: 5px;
   cursor: pointer;
   box-sizing: border-box;
 }

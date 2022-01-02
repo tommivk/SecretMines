@@ -9,6 +9,7 @@ import Notification from "./Notification";
 import AccountDetails from "./AccountDetails";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { generate } from "project-name-generator";
 
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
@@ -20,7 +21,6 @@ const App = () => {
   const [signingClient, setSigningClient] = useState(null);
   const [allGames, setAllGames] = useState(null);
   const [gameData, setGameData] = useState(null);
-  const [gameName, setGameName] = useState("");
   const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationData, setNotificationData] = useState({
@@ -113,7 +113,8 @@ const App = () => {
   };
 
   const instantiate = async () => {
-    if (isCreateGameLoading || gameName.trim() === "") return;
+    if (isCreateGameLoading) return;
+    let gameName = generate({ words: 2 }).spaced;
     try {
       setIsCreateGameLoading(true);
       const response = await signingClient.instantiate(
@@ -125,7 +126,6 @@ const App = () => {
       );
       console.log(response);
       handleNewNotification(`New game ${gameName} created!`, "success");
-      setGameName("");
       setIsCreateGameLoading(false);
     } catch (error) {
       console.log(error);
@@ -199,11 +199,6 @@ const App = () => {
         {!gameData && (
           <>
             <div className="game-creation">
-              <input
-                value={gameName}
-                onChange={({ target }) => setGameName(target.value)}
-                placeholder="game name"
-              ></input>
               <button onClick={instantiate}>
                 {isCreateGameLoading ? (
                   <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
