@@ -164,27 +164,47 @@ const Game = ({
     }
   };
 
+  const isPlayer = () => {
+    if (
+      gameState?.player_a === account?.address ||
+      gameState?.player_b === account?.address
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const isPlayerA = () => {
+    if (gameState?.player_a === account?.address) {
+      return true;
+    }
+    return false;
+  };
+
+  const isPlayerB = () => {
+    if (gameState?.player_b === account?.address) {
+      return true;
+    }
+    return false;
+  };
+
   const getStatusLabel = () => {
     const player = account?.address;
 
-    if (gameState?.player_a === player && !gameState?.player_b) {
+    if (isPlayerA() && !gameState?.player_b) {
       return <p>Waiting for an opponent to join</p>;
     }
     if (!gameState?.player_a || !gameState.player_b) {
       return <p>Waiting for players</p>;
     }
     if (gameState?.game_over) {
-      if (gameState?.player_a !== player && gameState?.player_b !== player) {
+      if (!isPlayer()) {
         return <p>Winner: {gameState?.winner}</p>;
       }
       if (gameState?.winner === player) {
         return <h2>You win!</h2>;
       }
-      if (
-        (gameState.winner !== player &&
-          gameState.player_a === account.address) ||
-        gameState.player_b === account.address
-      ) {
+      if (gameState.winner !== player && isPlayer()) {
         return <h2>You lose!</h2>;
       }
     }
@@ -196,10 +216,9 @@ const Game = ({
   };
 
   const getRematchStatus = () => {
-    const player = account?.address;
     if (
-      (gameState.player_b === player && gameState.player_a_wants_rematch) ||
-      (gameState.player_a === player && gameState.player_b_wants_rematch)
+      (isPlayerB() && gameState.player_a_wants_rematch) ||
+      (isPlayerA() && gameState.player_b_wants_rematch)
     ) {
       return (
         <div>
@@ -216,15 +235,15 @@ const Game = ({
     }
 
     if (
-      (gameState.player_a === player && gameState.player_a_wants_rematch) ||
-      (gameState.player_b === player && gameState.player_b_wants_rematch)
+      (isPlayerA() && gameState.player_a_wants_rematch) ||
+      (isPlayerB() && gameState.player_b_wants_rematch)
     ) {
       return <p>Request for a rematch sent</p>;
     }
 
     if (
-      (gameState.player_a === player && !gameState.player_a_wants_rematch) ||
-      (gameState.player_b === player && !gameState.player_b_wants_rematch)
+      (isPlayerA() && !gameState.player_a_wants_rematch) ||
+      (isPlayerB() && !gameState.player_b_wants_rematch)
     ) {
       return (
         <button className="rematch-button" onClick={() => requestRematch()}>
@@ -274,7 +293,7 @@ const Game = ({
       </div>
       <div>{getStatusLabel()}</div>
       {gameState?.game_over && <div>{getRematchStatus()}</div>}
-      {!gameState?.player_b && gameState?.player_a !== account?.address && (
+      {!gameState?.player_b && !isPlayerA() && (
         <button className="join-button" onClick={() => join()}>
           {joinGameIsLoading ? (
             <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
