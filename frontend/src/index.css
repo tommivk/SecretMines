@@ -61,14 +61,19 @@ code {
 
 .game-info {
   margin: auto;
-  margin-bottom: 5px;
-  background: #2a2323;
+  margin-bottom: 8px;
+  background: rgba(16, 197, 128, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   padding: 5px 10px;
   width: 450px;
   border-radius: 10px;
   color: white;
   position: relative;
   cursor: pointer;
+}
+
+.game-info:hover {
+  border: 2px solid rgba(160, 168, 167, 0.6);
 }
 
 .game-info:hover .game-number {
@@ -84,7 +89,7 @@ code {
   position: absolute;
   left: 0px;
   top: 0px;
-  border-radius: 10px 0px 0px 0px;
+  border-radius: 8px 0px 0px 0px;
   display: grid;
   place-items: center;
   font-size: 15px;
