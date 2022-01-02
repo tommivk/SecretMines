@@ -260,13 +260,16 @@ const Game = ({
     }
   };
 
-  if (!contractAddress) return null;
+  if (!gameData) return null;
   if (!gameState?.board) {
     return <p className="loading-game-text">Loading game...</p>;
   }
 
   return (
     <div className="game-container">
+      <div className="game-title">
+        <h1>{gameData.label}</h1>
+      </div>
       <h4>
         {gameState?.player_a ? gameState?.player_a : "Waiting for player"}
       </h4>
