@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { useParams } from "react-router";
 
 const Game = ({
   gameData,
@@ -16,6 +17,8 @@ const Game = ({
   const [gradientAngle, setGradientAngle] = useState(0);
   const [joinGameIsLoading, setJoinGameIsLoading] = useState(false);
   const [rematchRequestIsLoading, setRematchRequestIsLoading] = useState(false);
+
+  const { gameAddress } = useParams();
 
   useEffect(() => {
     if (gameState?.board) {
@@ -82,7 +85,7 @@ const Game = ({
 
     return () => webSocket.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameData]);
+  }, [gameAddress]);
 
   const requestRematch = async () => {
     if (!gameData?.address) return;

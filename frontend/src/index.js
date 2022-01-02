@@ -10,6 +10,12 @@ import AccountDetails from "./AccountDetails";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { generate } from "project-name-generator";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
@@ -29,6 +35,7 @@ const App = () => {
   });
 
   let notificationRef = useRef(null);
+  let navigate = useNavigate();
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -125,7 +132,7 @@ const App = () => {
         gameName
       );
       console.log(response);
-      handleNewNotification(`New game ${gameName} created!`, "success");
+      handleNewNotification(`New game "${gameName}" created!`, "success");
       setIsCreateGameLoading(false);
     } catch (error) {
       console.log(error);
@@ -158,6 +165,7 @@ const App = () => {
 
   const backToMenu = () => {
     setGameData(null);
+    navigate("/");
   };
 
   if (!signingClient) {
@@ -185,50 +193,64 @@ const App = () => {
         account={account}
         handleNewNotification={handleNewNotification}
       />
-      <div>
-        {gameData && (
-          <button
-            className="show-all-games-button"
-            onClick={() => backToMenu()}
-          >
-            Show all games
-          </button>
-        )}
-      </div>
-      <div>
-        {!gameData && (
-          <>
-            <div className="game-creation">
-              <button onClick={instantiate}>
-                {isCreateGameLoading ? (
-                  <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
-                ) : (
-                  "Create New Game"
-                )}
+
+      <Routes>
+        <Route
+          path="/:gameAddress"
+          element={
+            <>
+              <button
+                className="show-all-games-button"
+                onClick={() => backToMenu()}
+              >
+                Show all games
               </button>
+              <Game
+                gameData={gameData}
+                account={account}
+                signingClient={signingClient}
+                SECRET_WS_URL={SECRET_WS_URL}
+                handleNewNotification={handleNewNotification}
+              />
+            </>
+          }
+        ></Route>
+        <Route
+          path="/"
+          element={
+            <div>
+              <div>
+                <>
+                  <div className="game-creation">
+                    <button onClick={instantiate}>
+                      {isCreateGameLoading ? (
+                        <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+                      ) : (
+                        "Create New Game"
+                      )}
+                    </button>
+                  </div>
+                  <GameList allGames={allGames} setGameData={setGameData} />
+                </>
+
+                {!allGames && <p className="no-games-text">Loading games...</p>}
+                {allGames && allGames?.length === 0 && (
+                  <p className="no-games-text">No games created yet</p>
+                )}
+              </div>
             </div>
-            <GameList allGames={allGames} setGameData={setGameData} />
-          </>
-        )}
-        {!allGames && <p className="no-games-text">Loading games...</p>}
-        {allGames && allGames?.length === 0 && (
-          <p className="no-games-text">No games created yet</p>
-        )}
-      </div>
-      <Game
-        gameData={gameData}
-        account={account}
-        signingClient={signingClient}
-        SECRET_WS_URL={SECRET_WS_URL}
-        handleNewNotification={handleNewNotification}
-      />
+          }
+        ></Route>
+      </Routes>
     </div>
   );
 };
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Router>
+      <App />
+    </Router>
   </React.StrictMode>,
   document.getElementById("root")
 );
