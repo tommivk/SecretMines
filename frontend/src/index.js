@@ -3,11 +3,12 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import setupKeplr from "./setupKeplr";
 import getNewAccount from "./newAccount";
-import Game from "./game";
+import Game from "./Game";
+import GameList from "./GameList";
+import Notification from "./Notification";
+import AccountDetails from "./AccountDetails";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
@@ -159,24 +160,6 @@ const App = () => {
     setContractAddress(null);
   };
 
-  const getBalance = () => {
-    if (
-      account &&
-      account.balance &&
-      account.balance[0] &&
-      account?.balance[0]?.amount &&
-      account?.balance[0]?.amount > 0
-    ) {
-      return <span>{account.balance[0].amount / 1000000} SCRT</span>;
-    }
-    return (
-      <span>
-        0 SCRT, To get started, get some funds from the{" "}
-        <a href="addressToFaucet">faucet</a>
-      </span>
-    );
-  };
-
   if (!signingClient) {
     return (
       <div className="wallet-connect-container">
@@ -193,35 +176,15 @@ const App = () => {
   return (
     <div>
       {showNotification && (
-        <div
-          className={`notification  ${
-            notificationData.type === "success" ? "success" : ""
-          }`}
-          onClick={() => setShowNotification(false)}
-        >
-          <div className="notification-icon">
-            <FontAwesomeIcon
-              className="notification-icon"
-              icon={faExclamationCircle}
-            />
-          </div>
-          <div className="notification-text">{notificationData?.text}</div>
-        </div>
-      )}
-      <p className="account-details">
-        Your address:{" "}
-        <span className="account-address">{account?.address}</span>
-        <FontAwesomeIcon
-          className="copy-icon"
-          icon={faCopy}
-          onClick={() => {
-            navigator.clipboard.writeText(account?.address);
-            handleNewNotification("Address copied!", "success");
-          }}
+        <Notification
+          notificationData={notificationData}
+          setShowNotification={setShowNotification}
         />
-        <span className="account-balance">Balance: {getBalance()}</span>
-      </p>
-
+      )}
+      <AccountDetails
+        account={account}
+        handleNewNotification={handleNewNotification}
+      />
       <div>
         {contractAddress && (
           <button
@@ -249,18 +212,10 @@ const App = () => {
                 )}
               </button>
             </div>
-            {allGames &&
-              allGames.map((game, index) => (
-                <div
-                  className="game-info"
-                  key={game.address}
-                  onClick={() => setContractAddress(game?.address)}
-                >
-                  <div className="game-number"># {allGames.length - index}</div>
-                  <h2 className="game-name">{game?.label}</h2>
-                  <p className="game-address">{game?.address}</p>
-                </div>
-              ))}
+            <GameList
+              allGames={allGames}
+              setContractAddress={setContractAddress}
+            />
           </>
         )}
         {!allGames && <p className="no-games-text">Loading games...</p>}
