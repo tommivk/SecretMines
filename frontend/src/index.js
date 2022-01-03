@@ -21,7 +21,7 @@ import {
 const CHAIN_ID = "secretdev-1";
 const REST_URL = "http://localhost:1337";
 const CODE_ID = 1;
-const SECRET_WS_URL = "ws://localhost:26657/websocket";
+const SECRET_WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 
 const App = () => {
   const [account, setAccount] = useState(null);
