@@ -15,8 +15,16 @@ const AccountDetails = ({ account, handleNewNotification }) => {
     }
     return (
       <span>
-        0 SCRT, To get started, get some funds from the{" "}
-        <a href="addressToFaucet">faucet</a>
+        0 SCRT, Go get some funds from the{" "}
+        <a
+          className="faucet-link"
+          href="https://faucet.secrettestnet.io/"
+          target="__blank"
+          rel="noopener noreferrer"
+        >
+          faucet
+        </a>{" "}
+        to get started
       </span>
     );
   };
