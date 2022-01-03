@@ -18,9 +18,9 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-const CHAIN_ID = "secretdev-1";
-const REST_URL = "http://localhost:1337";
-const CODE_ID = 1;
+const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
+const REST_URL = process.env.REACT_APP_REST_URL;
+const CODE_ID = process.env.REACT_APP_CODE_ID;
 const SECRET_WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 
 const App = () => {
