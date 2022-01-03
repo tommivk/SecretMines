@@ -122,6 +122,11 @@ code {
   text-align: center;
 }
 
+.game-title h1 {
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+
 .game-creation {
   margin: auto;
   margin-top: 50px;
