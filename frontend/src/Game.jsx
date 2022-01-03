@@ -289,9 +289,9 @@ const Game = ({
                 ? `linear-gradient(${gradientAngle}deg,rgb(134 0 173) 50%, rgb(4 237 224) 98%)`
                 : "none",
             }}
+            key={index}
           >
             <div
-              key={index}
               className={`square ${value.value === 1 ? "green" : ""} ${
                 value.value === 2 ? "red" : ""
               } ${value.active ? "active" : ""}`}
