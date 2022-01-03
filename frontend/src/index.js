@@ -7,6 +7,7 @@ import Game from "./Game";
 import GameList from "./GameList";
 import Notification from "./Notification";
 import AccountDetails from "./AccountDetails";
+import Footer from "./Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { generate } from "project-name-generator";
@@ -170,14 +171,17 @@ const App = () => {
 
   if (!signingClient) {
     return (
-      <div className="wallet-connect-container">
-        <div className="keplr-connect" onClick={() => connectKeplr()}>
-          Connect Keplr Wallet
+      <>
+        <div className="wallet-connect-container">
+          <div className="keplr-connect" onClick={() => connectKeplr()}>
+            Connect Keplr Wallet
+          </div>
+          <div className="temporary-connect" onClick={() => createAccount()}>
+            Use Temporary Account
+          </div>
         </div>
-        <div className="temporary-connect" onClick={() => createAccount()}>
-          Use Temporary Account
-        </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
@@ -238,6 +242,7 @@ const App = () => {
                   <p className="no-games-text">No games created yet</p>
                 )}
               </div>
+              <Footer />
             </div>
           }
         ></Route>

@@ -171,7 +171,7 @@ code {
 }
 
 .wallet-connect-container {
-  height: 100vh;
+  height: calc(100vh - 80px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -273,4 +273,21 @@ code {
 
 .notification-icon {
   font-size: 30px;
+}
+
+.footer {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+}
+
+.footer a {
+  color: unset;
+}
+
+.github-icon {
+  font-size: 30px;
+  margin-right: 30px;
 }
