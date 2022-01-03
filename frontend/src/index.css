@@ -291,3 +291,7 @@ code {
   font-size: 30px;
   margin-right: 30px;
 }
+
+.faucet-link {
+  color: limegreen;
+}
