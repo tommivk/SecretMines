@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/SecretMines/static/css/main.299d2f60.css",
+    "main.js": "/SecretMines/static/js/main.d1afe521.js",
+    "static/media/flower.png": "/SecretMines/static/media/flower.ff96f33d80403aa74fd5.png",
+    "static/media/bomb.png": "/SecretMines/static/media/bomb.26441eb2baf7f3f5f87c.png",
+    "index.html": "/SecretMines/index.html",
+    "main.299d2f60.css.map": "/SecretMines/static/css/main.299d2f60.css.map",
+    "main.d1afe521.js.map": "/SecretMines/static/js/main.d1afe521.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.299d2f60.css",
+    "static/js/main.d1afe521.js"
+  ]
+}
