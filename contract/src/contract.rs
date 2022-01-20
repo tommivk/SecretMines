@@ -41,7 +41,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Quess { index } => try_quess(deps, env, index),
-        HandleMsg::Join {} => try_join(deps, env),
+        HandleMsg::Join { secret } => try_join(deps, env, secret),
         HandleMsg::Rematch {} => try_rematch(deps, env),
     }
 }
@@ -124,6 +124,7 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
 pub fn try_join<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
+    secret: u64,
 ) -> StdResult<HandleResponse> {
     let state = config_read(&deps.storage).load()?;
     let sender = Some(env.message.sender.clone());
@@ -133,6 +134,8 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
     seed.extend(env.block.chain_id.as_bytes().to_vec());
     seed.extend(&env.block.height.to_be_bytes());
     seed.extend(&env.block.time.to_be_bytes());
+    seed.extend(&secret.to_be_bytes());
+
     let new_seed: [u8; 32] = Sha256::digest(&seed).into();
     deps.storage.set(b"seed", &new_seed);
 

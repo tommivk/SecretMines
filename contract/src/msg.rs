@@ -11,7 +11,7 @@ pub enum InitMsg {
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     Quess { index: u8 },
-    Join {},
+    Join { secret: u64 },
     Rematch {},
 }
 

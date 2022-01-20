@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useParams } from "react-router";
+import { EnigmaUtils } from "secretjs";
 
 const Game = ({
   gameData,
@@ -157,10 +158,12 @@ const Game = ({
 
   const join = async () => {
     if (!gameData?.address) return;
+    const seed = EnigmaUtils.GenerateNewSeed();
+    const secret = Buffer.from(seed.slice(0, 8)).readUInt32BE(0);
     try {
       setJoinGameIsLoading(true);
       const response = await signingClient?.execute(gameData.address, {
-        join: {},
+        join: { secret },
       });
       console.log("res", response);
       setJoinGameIsLoading(false);
