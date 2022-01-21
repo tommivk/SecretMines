@@ -11,23 +11,10 @@ const Game = ({
   handleNewNotification,
 }) => {
   const [gameState, setGameState] = useState(null);
-  const [gameBoard, setGameBoard] = useState(
-    Array(25).fill({ value: 0, active: false })
-  );
+  const [activeSquare, setActiveSquare] = useState(null);
   const [gradientAngle, setGradientAngle] = useState(0);
   const [joinGameIsLoading, setJoinGameIsLoading] = useState(false);
   const [rematchRequestIsLoading, setRematchRequestIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (gameState?.board) {
-      let newArray = gameBoard.map(
-        (val, index) => (val = { ...val, value: gameState?.board[index] })
-      );
-      setGameBoard(newArray);
-      console.log(newArray);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -117,16 +104,18 @@ const Game = ({
 
   const quess = async (choice) => {
     if (!gameData?.address) return;
+
     try {
-      gameBoard[choice].active = true;
-      const result = await signingClient?.execute(gameData.address, {
+      setActiveSquare(choice);
+
+      await signingClient?.execute(gameData.address, {
         quess: { index: Number(choice) },
       });
-      console.log(result);
-      gameBoard[choice].active = false;
+
+      setActiveSquare(null);
     } catch (error) {
+      setActiveSquare(null);
       console.log(error?.message);
-      gameBoard[choice].active = false;
 
       if (error.message.toLowerCase().includes("you're not a player")) {
         return handleNewNotification("You are not a player!");
@@ -280,20 +269,23 @@ const Game = ({
         {gameState?.player_b ? gameState?.player_b : "Waiting for player"}
       </h4>
       <div className="board">
-        {gameBoard.map((value, index) => (
+        {gameState?.board.map((value, index) => (
           <div
-            className={`gradient-border ${value.active ? "active" : ""}`}
+            className={`gradient-border ${
+              index === activeSquare ? "active" : ""
+            }`}
             style={{
-              background: value.active
-                ? `linear-gradient(${gradientAngle}deg,rgb(134 0 173) 50%, rgb(4 237 224) 98%)`
-                : "none",
+              background:
+                index === activeSquare
+                  ? `linear-gradient(${gradientAngle}deg,rgb(134 0 173) 50%, rgb(4 237 224) 98%)`
+                  : "none",
             }}
             key={index}
           >
             <div
-              className={`square ${value.value === 1 ? "green" : ""} ${
-                value.value === 2 ? "red" : ""
-              } ${value.active ? "active" : ""}`}
+              className={`square ${value === 1 ? "green" : ""} ${
+                value === 2 ? "red" : ""
+              } ${index === activeSquare ? "active" : ""}`}
               onClick={() => quess(index)}
             ></div>
           </div>
