@@ -16,6 +16,7 @@ const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 const REST_URL = process.env.REACT_APP_REST_URL;
 const CODE_ID = process.env.REACT_APP_CODE_ID;
 const SECRET_WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
+const RPC_URL = process.env.REACT_APP_RPC_URL;
 
 const App = () => {
   const [account, setAccount] = useState(null);
@@ -137,7 +138,7 @@ const App = () => {
   };
 
   const connectKeplr = async () => {
-    await setupKeplr(CHAIN_ID, setAccount, setSigningClient);
+    await setupKeplr(CHAIN_ID, REST_URL, RPC_URL, setAccount, setSigningClient);
   };
 
   const createAccount = async () => {

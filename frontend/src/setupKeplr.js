@@ -1,6 +1,12 @@
 import { SigningCosmWasmClient } from "secretjs";
 
-const setupKeplr = async (CHAIN_ID, setAccount, setSigningClient) => {
+const setupKeplr = async (
+  CHAIN_ID,
+  REST_URL,
+  RPC_URL,
+  setAccount,
+  setSigningClient
+) => {
   // Define sleep
   const sleep = (ms) => new Promise((accept) => setTimeout(accept, ms));
 
@@ -25,8 +31,8 @@ const setupKeplr = async (CHAIN_ID, setAccount, setSigningClient) => {
   await window.keplr.experimentalSuggestChain({
     chainId: CHAIN_ID,
     chainName: "Local Secret Chain",
-    rpc: "http://localhost:26657",
-    rest: "http://localhost:1337",
+    rpc: RPC_URL,
+    rest: REST_URL,
     bip44: {
       coinType: 529,
     },
