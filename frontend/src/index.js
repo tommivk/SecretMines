@@ -50,10 +50,17 @@ const App = () => {
   }, [account]);
 
   useEffect(() => {
-    const fetchGames = async () => {
-      await getAllGames();
+    const getAllGames = async () => {
+      if (!signingClient) return;
+      try {
+        const response = await signingClient?.getContracts(CODE_ID);
+        setAllGames(response.reverse());
+      } catch (error) {
+        console.log(error);
+      }
     };
-    fetchGames();
+
+    getAllGames();
 
     const webSocket = new WebSocket(SECRET_WS_URL);
 
@@ -90,7 +97,6 @@ const App = () => {
     };
 
     return () => webSocket.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signingClient]);
 
   const handleNewNotification = (text, type) => {
@@ -106,17 +112,6 @@ const App = () => {
     }, 8000);
 
     notificationRef.current = timeout;
-  };
-
-  const getAllGames = async () => {
-    console.log("getAllGames client:", signingClient);
-    if (!signingClient) return;
-    try {
-      const response = await signingClient?.getContracts(CODE_ID);
-      setAllGames(response.reverse());
-    } catch (error) {
-      console.log(error);
-    }
   };
 
   const instantiate = async () => {
