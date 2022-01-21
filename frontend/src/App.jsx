@@ -21,6 +21,7 @@ const RPC_URL = process.env.REACT_APP_RPC_URL;
 const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
+  const [accountFetched, setAccountFetched] = useState(false);
   const [allGames, setAllGames] = useState(null);
   const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -39,6 +40,7 @@ const App = () => {
       if (!account && mnemonic) {
         await getNewAccount(REST_URL, setSigningClient, setAccount, mnemonic);
       }
+      setAccountFetched(true);
     };
     fetchAccount();
   }, [account]);
@@ -161,6 +163,7 @@ const App = () => {
     ? allGames?.find((game) => game.address === gameMatch.params.gameAddress)
     : null;
 
+  if (!accountFetched) return null;
   if (!signingClient) {
     return (
       <>
