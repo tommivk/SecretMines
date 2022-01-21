@@ -39,6 +39,23 @@ const Game = ({
   }, []);
 
   useEffect(() => {
+    const queryGame = async () => {
+      if (!gameData?.address) return;
+      try {
+        const response = await signingClient?.queryContractSmart(
+          gameData.address,
+          {
+            get_board: {},
+          }
+        );
+        if (response?.board) {
+          setGameState({ ...response });
+        }
+      } catch (error) {
+        console.log(error?.message);
+      }
+    };
+
     queryGame();
 
     const webSocket = new WebSocket(SECRET_WS_URL);
@@ -82,8 +99,7 @@ const Game = ({
     };
 
     return () => webSocket.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameData]);
+  }, [gameData, SECRET_WS_URL, signingClient]);
 
   const requestRematch = async () => {
     if (!gameData?.address) return;
@@ -133,23 +149,6 @@ const Game = ({
       }
 
       handleNewNotification(error.message);
-    }
-  };
-
-  const queryGame = async () => {
-    if (!gameData?.address) return;
-    try {
-      const response = await signingClient?.queryContractSmart(
-        gameData.address,
-        {
-          get_board: {},
-        }
-      );
-      if (response?.board) {
-        setGameState({ ...response });
-      }
-    } catch (error) {
-      console.log(error?.message);
     }
   };
 
