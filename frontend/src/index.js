@@ -16,6 +16,7 @@ import {
   Routes,
   Route,
   useNavigate,
+  useMatch,
 } from "react-router-dom";
 
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
@@ -27,7 +28,6 @@ const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
   const [allGames, setAllGames] = useState(null);
-  const [gameData, setGameData] = useState(null);
   const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationData, setNotificationData] = useState({
@@ -165,9 +165,13 @@ const App = () => {
   };
 
   const backToMenu = () => {
-    setGameData(null);
     navigate("/");
   };
+
+  const gameMatch = useMatch("/:gameAddress");
+  const gameData = gameMatch
+    ? allGames?.find((game) => game.address === gameMatch.params.gameAddress)
+    : null;
 
   if (!signingClient) {
     return (
@@ -234,7 +238,7 @@ const App = () => {
                       )}
                     </button>
                   </div>
-                  <GameList allGames={allGames} setGameData={setGameData} />
+                  <GameList allGames={allGames} />
                 </>
 
                 {!allGames && <p className="no-games-text">Loading games...</p>}
