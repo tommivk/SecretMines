@@ -21,6 +21,7 @@ const RPC_URL = process.env.REACT_APP_RPC_URL;
 const App = () => {
   const [account, setAccount] = useState(null);
   const [signingClient, setSigningClient] = useState(null);
+  const [cosmWasmClient, setCosmWasmClient] = useState(null);
   const [accountFetched, setAccountFetched] = useState(false);
   const [allGames, setAllGames] = useState(null);
   const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
@@ -38,7 +39,13 @@ const App = () => {
       const storageItem = localStorage.getItem("secretmines");
       const mnemonic = JSON.parse(storageItem);
       if (!account && mnemonic) {
-        await getNewAccount(REST_URL, setSigningClient, setAccount, mnemonic);
+        await getNewAccount(
+          REST_URL,
+          setSigningClient,
+          setCosmWasmClient,
+          setAccount,
+          mnemonic
+        );
       }
       setAccountFetched(true);
     };
@@ -125,6 +132,7 @@ const App = () => {
       console.log(response);
       handleNewNotification(`New game "${gameName}" created!`, "success");
       setIsCreateGameLoading(false);
+      await updateAccountBalance();
     } catch (error) {
       console.log(error);
       setIsCreateGameLoading(false);
@@ -148,6 +156,7 @@ const App = () => {
     let account = await getNewAccount(
       REST_URL,
       setSigningClient,
+      setCosmWasmClient,
       setAccount,
       mnemonic
     );
@@ -156,6 +165,15 @@ const App = () => {
 
   const backToMenu = () => {
     navigate("/");
+  };
+
+  const updateAccountBalance = async () => {
+    try {
+      const updatedAccount = await cosmWasmClient?.getAccount(account.address);
+      setAccount(updatedAccount);
+    } catch (error) {
+      handleNewNotification(error.message);
+    }
   };
 
   const gameMatch = useMatch("/:gameAddress");
@@ -191,6 +209,7 @@ const App = () => {
       <AccountDetails
         account={account}
         handleNewNotification={handleNewNotification}
+        updateAccountBalance={updateAccountBalance}
       />
 
       <Routes>
@@ -210,6 +229,7 @@ const App = () => {
                 signingClient={signingClient}
                 SECRET_WS_URL={SECRET_WS_URL}
                 handleNewNotification={handleNewNotification}
+                updateAccountBalance={updateAccountBalance}
               />
             </>
           }

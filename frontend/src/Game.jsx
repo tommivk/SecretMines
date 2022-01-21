@@ -9,6 +9,7 @@ const Game = ({
   signingClient,
   SECRET_WS_URL,
   handleNewNotification,
+  updateAccountBalance,
 }) => {
   const [gameState, setGameState] = useState(null);
   const [activeSquare, setActiveSquare] = useState(null);
@@ -96,6 +97,7 @@ const Game = ({
         rematch: {},
       });
       setRematchRequestIsLoading(false);
+      await updateAccountBalance();
     } catch (error) {
       console.log(error?.message);
       setRematchRequestIsLoading(false);
@@ -113,6 +115,7 @@ const Game = ({
       });
 
       setActiveSquare(null);
+      await updateAccountBalance();
     } catch (error) {
       setActiveSquare(null);
       console.log(error?.message);
@@ -152,6 +155,7 @@ const Game = ({
       });
       console.log("res", response);
       setJoinGameIsLoading(false);
+      await updateAccountBalance();
     } catch (err) {
       console.log(err);
       setJoinGameIsLoading(false);

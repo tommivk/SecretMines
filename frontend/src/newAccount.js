@@ -12,6 +12,7 @@ import { Bip39, Random } from "@iov/crypto";
 const getNewAccount = async (
   REST_URL,
   setSigningClient,
+  setCosmWasmClient,
   setAccount,
   usermnemonic
 ) => {
@@ -66,6 +67,7 @@ const getNewAccount = async (
     customFees
   );
   setSigningClient(signingClient);
+  setCosmWasmClient(client);
   setAccount({ ...account, address: accAddress });
   return { mnemonic, accAddress };
 };
