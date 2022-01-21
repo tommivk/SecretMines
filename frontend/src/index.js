@@ -47,8 +47,7 @@ const App = () => {
       }
     };
     fetchAccount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [account]);
 
   useEffect(() => {
     const fetchGames = async () => {
