@@ -5,16 +5,16 @@ import {
   encodeSecp256k1Pubkey,
   EnigmaUtils,
   SigningCosmWasmClient,
-  Account,
 } from "secretjs";
 
 import { Bip39, Random } from "@iov/crypto";
+import { NewAccount, UserAccount } from "./types";
 
 const getNewAccount = async (
   REST_URL: string,
   setSigningClient: React.Dispatch<React.SetStateAction<SigningCosmWasmClient>>,
   setCosmWasmClient: React.Dispatch<React.SetStateAction<CosmWasmClient>>,
-  setAccount: React.Dispatch<React.SetStateAction<Account>>,
+  setAccount: React.Dispatch<React.SetStateAction<UserAccount>>,
   usermnemonic: string | null
 ) => {
   //Use mnemonic from localstorage if it exists or create new mnemonic
@@ -33,11 +33,7 @@ const getNewAccount = async (
 
   // Query the account
   const client = new CosmWasmClient(REST_URL);
-  const account = await client.getAccount(accAddress);
-  console.log("mnemonic: ", mnemonic);
-  console.log("address: ", accAddress);
-  console.log("account: ", account);
-  console.log(accAddress);
+  const account = await client.getAccount(accAddress); // will be undefined if address has no funds yet
 
   const customFees = {
     upload: {
@@ -67,11 +63,17 @@ const getNewAccount = async (
     customFees
   );
 
-  if(!signingClient || !client ||!account ) return
+  if (!signingClient || !client) return;
 
   setSigningClient(signingClient);
   setCosmWasmClient(client);
-  setAccount({...account, address: accAddress});
+
+  const newAccount: NewAccount = {
+    address: accAddress,
+    balance: undefined,
+  };
+
+  account ? setAccount(account) : setAccount(newAccount);
 
   return { mnemonic, accAddress };
 };
