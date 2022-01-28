@@ -7,6 +7,7 @@ const Game = ({
   gameData,
   account,
   signingClient,
+  cosmWasmClient,
   SECRET_WS_URL,
   handleNewNotification,
   updateAccountBalance,
@@ -29,8 +30,9 @@ const Game = ({
   useEffect(() => {
     const queryGame = async () => {
       if (!gameData?.address) return;
+      console.log(signingClient);
       try {
-        const response = await signingClient?.queryContractSmart(
+        const response = await cosmWasmClient?.queryContractSmart(
           gameData.address,
           {
             get_board: {},
