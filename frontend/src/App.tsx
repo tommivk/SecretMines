@@ -210,7 +210,7 @@ const App = () => {
   const gameMatch = useMatch("/:gameAddress");
   const gameData = gameMatch
     ? allGames?.find((game) => game.address === gameMatch.params.gameAddress)
-    : null;
+    : undefined;
 
   if (!accountFetched) return null;
   if (!signingClient) {

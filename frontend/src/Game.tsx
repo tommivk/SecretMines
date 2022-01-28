@@ -1,7 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { EnigmaUtils } from "secretjs";
+import {
+  Account,
+  CosmWasmClient,
+  EnigmaUtils,
+  SigningCosmWasmClient,
+} from "secretjs";
+import { GameInfo, GameState } from "./types";
+
+type Props = {
+  gameData?: GameInfo;
+  account?: Account;
+  signingClient?: SigningCosmWasmClient;
+  cosmWasmClient?: CosmWasmClient;
+  SECRET_WS_URL?: string;
+  handleNewNotification: (text: string, type: string) => void;
+  updateAccountBalance: () => void;
+};
 
 const Game = ({
   gameData,
@@ -11,12 +27,13 @@ const Game = ({
   SECRET_WS_URL,
   handleNewNotification,
   updateAccountBalance,
-}) => {
-  const [gameState, setGameState] = useState(null);
-  const [activeSquare, setActiveSquare] = useState(null);
-  const [gradientAngle, setGradientAngle] = useState(0);
-  const [joinGameIsLoading, setJoinGameIsLoading] = useState(false);
-  const [rematchRequestIsLoading, setRematchRequestIsLoading] = useState(false);
+}: Props) => {
+  const [gameState, setGameState] = useState<GameState>();
+  const [activeSquare, setActiveSquare] = useState<number | null>(null);
+  const [gradientAngle, setGradientAngle] = useState<number>(0);
+  const [joinGameIsLoading, setJoinGameIsLoading] = useState<boolean>(false);
+  const [rematchRequestIsLoading, setRematchRequestIsLoading] =
+    useState<boolean>(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -48,12 +65,14 @@ const Game = ({
 
     queryGame();
 
+    if (!SECRET_WS_URL) {
+      handleNewNotification("Websocket URL was undefined", "error");
+      return;
+    }
     const webSocket = new WebSocket(SECRET_WS_URL);
     console.log("socket: ", webSocket);
 
-    webSocket.onopen = function (e) {
-      console.log("WebSocket connection established");
-
+    webSocket.onopen = function () {
       // listen for compute events with contract address
       let query = `message.module='compute' AND message.contract_address='${gameData?.address}'`;
 
@@ -73,7 +92,6 @@ const Game = ({
 
     webSocket.onmessage = async (message) => {
       const data = JSON.parse(message.data);
-      console.log(data);
       //update game state
       if (data.id === "gameUpdate") {
         await queryGame();
@@ -84,15 +102,21 @@ const Game = ({
       console.log("WebSocket connection closed");
     };
 
-    webSocket.onerror = (error) => {
+    webSocket.onerror = (error: ErrorEvent) => {
       console.log(`WebSocket error: ${error.message}`);
     };
 
     return () => webSocket.close();
-  }, [gameData, SECRET_WS_URL, signingClient]);
+  }, [
+    gameData,
+    SECRET_WS_URL,
+    signingClient,
+    cosmWasmClient,
+    handleNewNotification,
+  ]);
 
   const requestRematch = async () => {
-    if (!gameData?.address) return;
+    if (!gameData?.address || !signingClient) return;
     try {
       setRematchRequestIsLoading(true);
       await signingClient.execute(gameData?.address, {
@@ -106,7 +130,7 @@ const Game = ({
     }
   };
 
-  const quess = async (choice) => {
+  const quess = async (choice: number) => {
     if (!gameData?.address) return;
 
     try {
@@ -123,26 +147,29 @@ const Game = ({
       console.log(error?.message);
 
       if (error.message.toLowerCase().includes("you're not a player")) {
-        return handleNewNotification("You are not a player!");
+        return handleNewNotification("You are not a player", "error");
       }
 
       if (error.message.toLowerCase().includes("not your turn")) {
-        return handleNewNotification("It's not your turn");
+        return handleNewNotification("It's not your turn", "error");
       }
 
       if (error.message.toLowerCase().includes("already quessed")) {
-        return handleNewNotification("The square has already been quessed!");
+        return handleNewNotification(
+          "The square has already been quessed",
+          "error"
+        );
       }
 
       if (error.message.toLowerCase().includes("game is over")) {
-        return handleNewNotification("The game is over!");
+        return handleNewNotification("The game is over", "error");
       }
 
       if (!gameState?.player_b) {
-        return handleNewNotification("The game is not started yet!");
+        return handleNewNotification("The game is not started yet", "error");
       }
 
-      handleNewNotification(error.message);
+      handleNewNotification(error.message, "error");
     }
   };
 
@@ -217,8 +244,8 @@ const Game = ({
 
   const getRematchStatus = () => {
     if (
-      (isPlayerB() && gameState.player_a_wants_rematch) ||
-      (isPlayerA() && gameState.player_b_wants_rematch)
+      (isPlayerB() && gameState?.player_a_wants_rematch) ||
+      (isPlayerA() && gameState?.player_b_wants_rematch)
     ) {
       return (
         <div>
@@ -235,15 +262,15 @@ const Game = ({
     }
 
     if (
-      (isPlayerA() && gameState.player_a_wants_rematch) ||
-      (isPlayerB() && gameState.player_b_wants_rematch)
+      (isPlayerA() && gameState?.player_a_wants_rematch) ||
+      (isPlayerB() && gameState?.player_b_wants_rematch)
     ) {
       return <p>Request for a rematch sent</p>;
     }
 
     if (
-      (isPlayerA() && !gameState.player_a_wants_rematch) ||
-      (isPlayerB() && !gameState.player_b_wants_rematch)
+      (isPlayerA() && !gameState?.player_a_wants_rematch) ||
+      (isPlayerB() && !gameState?.player_b_wants_rematch)
     ) {
       return (
         <button className="rematch-button" onClick={() => requestRematch()}>
@@ -255,10 +282,11 @@ const Game = ({
         </button>
       );
     }
+    return <></>;
   };
 
   if (!gameData) return null;
-  if (!gameState?.board) {
+  if (!gameState || !gameState.board) {
     return <p className="loading-game-text">Loading game...</p>;
   }
 
@@ -267,15 +295,11 @@ const Game = ({
       <div className="game-title">
         <h1>{gameData.label}</h1>
       </div>
-      <h4>
-        {gameState?.player_a ? gameState?.player_a : "Waiting for player"}
-      </h4>
+      <h4>{gameState.player_a ? gameState.player_a : "Waiting for player"}</h4>
       <h3>VS</h3>
-      <h4>
-        {gameState?.player_b ? gameState?.player_b : "Waiting for player"}
-      </h4>
+      <h4>{gameState.player_b ? gameState.player_b : "Waiting for player"}</h4>
       <div className="board">
-        {gameState?.board.map((value, index) => (
+        {gameState.board.map((value, index) => (
           <div
             className={`gradient-border ${
               index === activeSquare ? "active" : ""
@@ -298,8 +322,8 @@ const Game = ({
         ))}
       </div>
       <div>{getStatusLabel()}</div>
-      {gameState?.game_over && <div>{getRematchStatus()}</div>}
-      {!gameState?.player_b && !isPlayerA() && (
+      {gameState.game_over && <div>{getRematchStatus()}</div>}
+      {!gameState.player_b && !isPlayerA() && (
         <button className="join-button" onClick={() => join()}>
           {joinGameIsLoading ? (
             <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
