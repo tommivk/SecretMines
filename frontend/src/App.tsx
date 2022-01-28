@@ -9,8 +9,9 @@ import AccountDetails from "./AccountDetails";
 import Footer from "./Footer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { generate } from "project-name-generator";
+import * as generateName from "project-name-generator";
 import { Routes, Route, useNavigate, useMatch } from "react-router-dom";
+import { Account, CosmWasmClient, SigningCosmWasmClient } from "secretjs";
 
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 const REST_URL = process.env.REACT_APP_REST_URL;
@@ -18,27 +19,37 @@ const CODE_ID = process.env.REACT_APP_CODE_ID;
 const SECRET_WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 const RPC_URL = process.env.REACT_APP_RPC_URL;
 
+type GameType = {
+  address: string;
+  label: string;
+};
+
 const App = () => {
-  const [account, setAccount] = useState(null);
-  const [signingClient, setSigningClient] = useState(null);
-  const [cosmWasmClient, setCosmWasmClient] = useState(null);
+  const [account, setAccount] = useState<Account>();
+  const [signingClient, setSigningClient] = useState<SigningCosmWasmClient>();
+  const [cosmWasmClient, setCosmWasmClient] = useState<CosmWasmClient>();
   const [accountFetched, setAccountFetched] = useState(false);
-  const [allGames, setAllGames] = useState(null);
-  const [isCreateGameLoading, setIsCreateGameLoading] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationData, setNotificationData] = useState({
+  const [allGames, setAllGames] = useState<Array<GameType>>();
+  const [isCreateGameLoading, setIsCreateGameLoading] =
+    useState<boolean>(false);
+  const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [notificationData, setNotificationData] = useState<{
+    text: string;
+    type: string;
+  }>({
     text: "",
     type: "",
   });
 
-  let notificationRef = useRef(null);
+  let notificationRef: React.MutableRefObject<NodeJS.Timeout | null> =
+    useRef(null);
   let navigate = useNavigate();
 
   useEffect(() => {
     const fetchAccount = async () => {
       const storageItem = localStorage.getItem("secretmines");
-      const mnemonic = JSON.parse(storageItem);
-      if (!account && mnemonic) {
+      if (!account && storageItem) {
+        const mnemonic = JSON.parse(storageItem);
         await getNewAccount(
           REST_URL,
           setSigningClient,
@@ -55,9 +66,13 @@ const App = () => {
   useEffect(() => {
     const getAllGames = async () => {
       if (!signingClient) return;
+      if (!CODE_ID) {
+        return handleNewNotification("CODE_ID was undefined", "error");
+      }
       try {
-        const response = await signingClient?.getContracts(CODE_ID);
-        setAllGames(response.reverse());
+        const response = await signingClient.getContracts(Number(CODE_ID));
+        const orderedGames = [...response].reverse();
+        setAllGames(orderedGames);
       } catch (error) {
         console.log(error);
       }
@@ -65,9 +80,13 @@ const App = () => {
 
     getAllGames();
 
+    if (!SECRET_WS_URL) {
+      handleNewNotification("Websocket URL was undefined", "error");
+      return;
+    }
     const webSocket = new WebSocket(SECRET_WS_URL);
 
-    // listen for contract instatiations
+    // listen for contract instantiations
     const query = `message.module='compute' AND message.action='instantiate'`;
 
     webSocket.onopen = () => {
@@ -95,14 +114,14 @@ const App = () => {
       console.log("Websocket connection closed");
     };
 
-    webSocket.onerror = (error) => {
+    webSocket.onerror = (error: ErrorEvent) => {
       console.log(`[error] ${error.message}`);
     };
 
     return () => webSocket.close();
   }, [signingClient]);
 
-  const handleNewNotification = (text, type) => {
+  const handleNewNotification = (text: string, type: string) => {
     if (notificationRef.current) {
       clearTimeout(notificationRef.current);
     }
@@ -118,12 +137,12 @@ const App = () => {
   };
 
   const instantiate = async () => {
-    if (isCreateGameLoading) return;
-    let gameName = generate({ words: 2 }).spaced;
+    if (isCreateGameLoading || !signingClient || !CODE_ID) return;
+    let gameName = generateName({ words: 2 }).spaced;
     try {
       setIsCreateGameLoading(true);
       const response = await signingClient.instantiate(
-        CODE_ID,
+        Number(CODE_ID),
         {
           CreateGame: {},
         },
@@ -140,15 +159,24 @@ const App = () => {
         error.message.toLowerCase().includes("contract account already exists")
       ) {
         return handleNewNotification(
-          "A game with the same name already exists"
+          "A game with the same name already exists",
+          "error"
         );
       }
-      handleNewNotification(error.message);
+      handleNewNotification(error.message, "error");
     }
   };
 
   const connectKeplr = async () => {
-    await setupKeplr(CHAIN_ID, REST_URL, RPC_URL, setAccount, setSigningClient);
+    if (!CHAIN_ID || !REST_URL || !RPC_URL) return;
+    await setupKeplr(
+      CHAIN_ID,
+      REST_URL,
+      RPC_URL,
+      setAccount,
+      setSigningClient,
+      setCosmWasmClient
+    );
   };
 
   const createAccount = async () => {
@@ -168,11 +196,18 @@ const App = () => {
   };
 
   const updateAccountBalance = async () => {
+    if (!cosmWasmClient || !account) return;
     try {
-      const updatedAccount = await cosmWasmClient?.getAccount(account.address);
+      const updatedAccount = await cosmWasmClient.getAccount(account.address);
+      if (!updatedAccount) {
+        return handleNewNotification(
+          "Couldn't update account balance",
+          "error"
+        );
+      }
       setAccount(updatedAccount);
     } catch (error) {
-      handleNewNotification(error.message);
+      handleNewNotification(error.message, "error");
     }
   };
 
@@ -209,7 +244,6 @@ const App = () => {
       <AccountDetails
         account={account}
         handleNewNotification={handleNewNotification}
-        updateAccountBalance={updateAccountBalance}
       />
 
       <Routes>
@@ -227,6 +261,7 @@ const App = () => {
                 gameData={gameData}
                 account={account}
                 signingClient={signingClient}
+                cosmWasmClient={cosmWasmClient}
                 SECRET_WS_URL={SECRET_WS_URL}
                 handleNewNotification={handleNewNotification}
                 updateAccountBalance={updateAccountBalance}
