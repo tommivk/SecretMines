@@ -5,16 +5,17 @@ import {
   encodeSecp256k1Pubkey,
   EnigmaUtils,
   SigningCosmWasmClient,
+  Account,
 } from "secretjs";
 
 import { Bip39, Random } from "@iov/crypto";
 
 const getNewAccount = async (
-  REST_URL,
-  setSigningClient,
-  setCosmWasmClient,
-  setAccount,
-  usermnemonic
+  REST_URL: string,
+  setSigningClient: React.Dispatch<React.SetStateAction<SigningCosmWasmClient>>,
+  setCosmWasmClient: React.Dispatch<React.SetStateAction<CosmWasmClient>>,
+  setAccount: React.Dispatch<React.SetStateAction<Account>>,
+  usermnemonic: string | null
 ) => {
   //Use mnemonic from localstorage if it exists or create new mnemonic
   const trimmedMnemonic = usermnemonic?.replace(/"/g, "");
@@ -33,7 +34,6 @@ const getNewAccount = async (
   // Query the account
   const client = new CosmWasmClient(REST_URL);
   const account = await client.getAccount(accAddress);
-
   console.log("mnemonic: ", mnemonic);
   console.log("address: ", accAddress);
   console.log("account: ", account);
@@ -66,9 +66,13 @@ const getNewAccount = async (
     txEncryptionSeed,
     customFees
   );
+
+  if(!signingClient || !client ||!account ) return
+
   setSigningClient(signingClient);
   setCosmWasmClient(client);
-  setAccount({ ...account, address: accAddress });
+  setAccount({...account, address: accAddress});
+
   return { mnemonic, accAddress };
 };
 

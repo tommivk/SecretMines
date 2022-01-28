@@ -45,6 +45,9 @@ const App = () => {
     const fetchAccount = async () => {
       const storageItem = localStorage.getItem("secretmines");
       if (!account && storageItem) {
+        if (!REST_URL) {
+          return handleNewNotification("REST_URL was undefined", "error");
+        }
         const mnemonic = JSON.parse(storageItem);
         await getNewAccount(
           REST_URL,
@@ -177,6 +180,9 @@ const App = () => {
 
   const createAccount = async () => {
     const mnemonic = localStorage.getItem("secretmines");
+    if (!REST_URL) {
+      return handleNewNotification("REST_URL was undefined", "error");
+    }
     let account = await getNewAccount(
       REST_URL,
       setSigningClient,
@@ -184,7 +190,11 @@ const App = () => {
       setAccount,
       mnemonic
     );
-    localStorage.setItem("secretmines", JSON.stringify(account.mnemonic));
+    if (account) {
+      localStorage.setItem("secretmines", JSON.stringify(account.mnemonic));
+    } else {
+      handleNewNotification("Couldn't create new account", "error");
+    }
   };
 
   const backToMenu = () => {
