@@ -12,6 +12,7 @@ import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import * as generateName from "project-name-generator";
 import { Routes, Route, useNavigate, useMatch } from "react-router-dom";
 import { Account, CosmWasmClient, SigningCosmWasmClient } from "secretjs";
+import { GameInfo } from "./types";
 
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 const REST_URL = process.env.REACT_APP_REST_URL;
@@ -19,17 +20,12 @@ const CODE_ID = process.env.REACT_APP_CODE_ID;
 const SECRET_WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 const RPC_URL = process.env.REACT_APP_RPC_URL;
 
-type GameType = {
-  address: string;
-  label: string;
-};
-
 const App = () => {
   const [account, setAccount] = useState<Account>();
   const [signingClient, setSigningClient] = useState<SigningCosmWasmClient>();
   const [cosmWasmClient, setCosmWasmClient] = useState<CosmWasmClient>();
   const [accountFetched, setAccountFetched] = useState(false);
-  const [allGames, setAllGames] = useState<Array<GameType>>();
+  const [allGames, setAllGames] = useState<Array<GameInfo>>();
   const [isCreateGameLoading, setIsCreateGameLoading] =
     useState<boolean>(false);
   const [showNotification, setShowNotification] = useState<boolean>(false);
