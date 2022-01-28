@@ -11,11 +11,8 @@ type Props = {
 const AccountDetails = ({ account, handleNewNotification }: Props) => {
   const getBalance = () => {
     if (
-      account &&
-      account.balance &&
-      account.balance[0] &&
-      account?.balance[0]?.amount &&
-      Number(account?.balance[0]?.amount) > 0
+      account?.balance?.[0]?.amount &&
+      Number(account.balance[0].amount) > 0
     ) {
       return <span>{Number(account.balance[0].amount) / 1000000} SCRT</span>;
     }
