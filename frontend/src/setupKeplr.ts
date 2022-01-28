@@ -1,14 +1,20 @@
-import { SigningCosmWasmClient } from "secretjs";
+import { Account, CosmWasmClient, SigningCosmWasmClient } from "secretjs";
+import { Window as KeplrWindow } from "@keplr-wallet/types";
+
+declare global {
+  interface Window extends KeplrWindow {}
+}
 
 const setupKeplr = async (
-  CHAIN_ID,
-  REST_URL,
-  RPC_URL,
-  setAccount,
-  setSigningClient
+  CHAIN_ID: string,
+  REST_URL: string,
+  RPC_URL: string,
+  setAccount: React.Dispatch<React.SetStateAction<Account>>,
+  setSigningClient: React.Dispatch<React.SetStateAction<SigningCosmWasmClient>>,
+  setCosmWasmClient: React.Dispatch<React.SetStateAction<CosmWasmClient>>
 ) => {
   // Define sleep
-  const sleep = (ms) => new Promise((accept) => setTimeout(accept, ms));
+  const sleep = (ms: number) => new Promise((accept) => setTimeout(accept, ms));
 
   // Wait for Keplr to be injected to the page
   while (!window.keplr && !window.getOfflineSigner && !window.getEnigmaUtils) {
@@ -28,7 +34,7 @@ const setupKeplr = async (
   //     3. rest = "https://chainofsecrets.secrettestnet.io"
   //     4. chainName = Whatever you like
   // For more examples, go to: https://github.com/chainapsis/keplr-example/blob/master/src/main.js
-  await window.keplr.experimentalSuggestChain({
+  await window.keplr?.experimentalSuggestChain({
     chainId: CHAIN_ID,
     chainName: "Local Secret Chain",
     rpc: RPC_URL,
@@ -74,19 +80,20 @@ const setupKeplr = async (
 
   // Enable Keplr.
   // This pops-up a window for the user to allow keplr access to the webpage.
-  await window.keplr.enable(CHAIN_ID);
+  await window.keplr?.enable(CHAIN_ID);
 
   // Setup SecrtJS with Keplr's OfflineSigner
   // This pops-up a window for the user to sign on each tx we sent
-  const keplrOfflineSigner = window.getOfflineSigner(CHAIN_ID);
-  const accounts = await keplrOfflineSigner.getAccounts();
+  const keplrOfflineSigner = window.getOfflineSigner?.(CHAIN_ID);
+  const accounts = await keplrOfflineSigner?.getAccounts();
   console.log("accounts", accounts);
 
+  if(!accounts || !accounts[0] || !keplrOfflineSigner) return
   const signingClient = new SigningCosmWasmClient(
-    "http://localhost:1337", // holodeck - https://chainofsecrets.secrettestnet.io; mainnet - user your LCD/REST provider
+    REST_URL, // holodeck - https://chainofsecrets.secrettestnet.io; mainnet - user your LCD/REST provider
     accounts[0].address,
-    keplrOfflineSigner,
-    window.getEnigmaUtils(CHAIN_ID),
+    keplrOfflineSigner as any,
+    window.getEnigmaUtils?.(CHAIN_ID),
     {
       // 300k - Max gas units we're willing to use for init
       init: {
@@ -100,9 +107,14 @@ const setupKeplr = async (
       },
     }
   );
+  const client = new CosmWasmClient(REST_URL);
 
+  const account = await client.getAccount(accounts[0].address);
+  if(!account) return;
+
+  setAccount(account);
   setSigningClient(signingClient);
-  setAccount(accounts[0]);
+  setCosmWasmClient(client)
 };
 
 export default setupKeplr;
