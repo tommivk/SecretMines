@@ -1,10 +1,10 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
-import { Account } from "secretjs";
+import { UserAccount } from "./types";
 
 type Props = {
-  account?: Account;
+  account?: UserAccount;
   handleNewNotification: (text: string, type: string) => void;
 };
 

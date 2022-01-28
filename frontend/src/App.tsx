@@ -11,8 +11,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import * as generateName from "project-name-generator";
 import { Routes, Route, useNavigate, useMatch } from "react-router-dom";
-import { Account, CosmWasmClient, SigningCosmWasmClient } from "secretjs";
-import { GameInfo } from "./types";
+import { CosmWasmClient, SigningCosmWasmClient } from "secretjs";
+import { GameInfo, UserAccount } from "./types";
 
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 const REST_URL = process.env.REACT_APP_REST_URL;
@@ -21,7 +21,7 @@ const SECRET_WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 const RPC_URL = process.env.REACT_APP_RPC_URL;
 
 const App = () => {
-  const [account, setAccount] = useState<Account>();
+  const [account, setAccount] = useState<UserAccount>();
   const [signingClient, setSigningClient] = useState<SigningCosmWasmClient>();
   const [cosmWasmClient, setCosmWasmClient] = useState<CosmWasmClient>();
   const [accountFetched, setAccountFetched] = useState(false);

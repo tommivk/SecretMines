@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import {
-  Account,
-  CosmWasmClient,
-  EnigmaUtils,
-  SigningCosmWasmClient,
-} from "secretjs";
-import { GameInfo, GameState } from "./types";
+import { CosmWasmClient, EnigmaUtils, SigningCosmWasmClient } from "secretjs";
+import { GameInfo, GameState, UserAccount } from "./types";
 
 type Props = {
   gameData?: GameInfo;
-  account?: Account;
+  account?: UserAccount;
   signingClient?: SigningCosmWasmClient;
   cosmWasmClient?: CosmWasmClient;
   SECRET_WS_URL?: string;
