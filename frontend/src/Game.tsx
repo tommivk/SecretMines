@@ -26,9 +26,7 @@ const Game = ({
   const [gameState, setGameState] = useState<GameState>();
   const [activeSquare, setActiveSquare] = useState<number | null>(null);
   const [gradientAngle, setGradientAngle] = useState<number>(0);
-  const [joinGameIsLoading, setJoinGameIsLoading] = useState<boolean>(false);
-  const [rematchRequestIsLoading, setRematchRequestIsLoading] =
-    useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -113,15 +111,40 @@ const Game = ({
   const requestRematch = async () => {
     if (!gameData?.address || !signingClient) return;
     try {
-      setRematchRequestIsLoading(true);
-      await signingClient.execute(gameData?.address, {
-        rematch: {},
-      });
-      setRematchRequestIsLoading(false);
-      await updateAccountBalance();
+      setIsLoading(true);
+      await signingClient.execute(
+        gameData?.address,
+        {
+          rematch: {},
+        },
+        undefined,
+        [
+          {
+            amount: "3000000",
+            denom: "uscrt",
+          },
+        ]
+      );
     } catch (error) {
-      console.log(error?.message);
-      setRematchRequestIsLoading(false);
+      handleNewNotification(error.message, "error");
+    } finally {
+      setIsLoading(false);
+      updateAccountBalance();
+    }
+  };
+
+  const withdraw = async () => {
+    if (!gameData?.address) return;
+    try {
+      setIsLoading(true);
+      await signingClient?.execute(gameData.address, {
+        withdraw: {},
+      });
+    } catch (error) {
+      handleNewNotification(error.message, "error");
+    } finally {
+      setIsLoading(false);
+      updateAccountBalance();
     }
   };
 
@@ -134,13 +157,7 @@ const Game = ({
       await signingClient?.execute(gameData.address, {
         quess: { index: Number(choice) },
       });
-
-      setActiveSquare(null);
-      await updateAccountBalance();
     } catch (error) {
-      setActiveSquare(null);
-      console.log(error?.message);
-
       if (error.message.toLowerCase().includes("you're not a player")) {
         return handleNewNotification("You are not a player", "error");
       }
@@ -165,6 +182,9 @@ const Game = ({
       }
 
       handleNewNotification(error.message, "error");
+    } finally {
+      setActiveSquare(null);
+      updateAccountBalance();
     }
   };
 
@@ -173,16 +193,25 @@ const Game = ({
     const seed = EnigmaUtils.GenerateNewSeed();
     const secret = Buffer.from(seed.slice(0, 8)).readUInt32BE(0);
     try {
-      setJoinGameIsLoading(true);
-      const response = await signingClient?.execute(gameData.address, {
-        join: { secret },
-      });
-      console.log("res", response);
-      setJoinGameIsLoading(false);
-      await updateAccountBalance();
-    } catch (err) {
-      console.log(err);
-      setJoinGameIsLoading(false);
+      setIsLoading(true);
+      await signingClient?.execute(
+        gameData.address,
+        {
+          join: { secret },
+        },
+        undefined,
+        [
+          {
+            amount: "3000000",
+            denom: "uscrt",
+          },
+        ]
+      );
+    } catch (error) {
+      handleNewNotification(error.message, "error");
+    } finally {
+      setIsLoading(false);
+      updateAccountBalance();
     }
   };
 
@@ -246,7 +275,7 @@ const Game = ({
         <div>
           <p>Your opponent requested a rematch</p>
           <button className="rematch-button" onClick={() => requestRematch()}>
-            {rematchRequestIsLoading ? (
+            {isLoading ? (
               <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
             ) : (
               "Rematch"
@@ -269,7 +298,7 @@ const Game = ({
     ) {
       return (
         <button className="rematch-button" onClick={() => requestRematch()}>
-          {rematchRequestIsLoading ? (
+          {isLoading ? (
             <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
           ) : (
             "Rematch"
@@ -278,6 +307,17 @@ const Game = ({
       );
     }
     return <></>;
+  };
+
+  const withdrawRematchOfferVisible = () => {
+    return (
+      (isPlayerA() &&
+        gameState?.player_a_wants_rematch &&
+        !gameState?.player_b_wants_rematch) ||
+      (isPlayerB() &&
+        gameState?.player_b_wants_rematch &&
+        !gameState?.player_a_wants_rematch)
+    );
   };
 
   if (!gameData) return null;
@@ -316,14 +356,33 @@ const Game = ({
           </div>
         ))}
       </div>
+      <div className="bet-amount">Bet: {gameState.bet / 1000000} SCRT</div>
       <div>{getStatusLabel()}</div>
       {gameState.game_over && <div>{getRematchStatus()}</div>}
       {!gameState.player_b && !isPlayerA() && (
         <button className="join-button" onClick={() => join()}>
-          {joinGameIsLoading ? (
+          {isLoading ? (
             <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
           ) : (
             "Join Game"
+          )}
+        </button>
+      )}
+      {!gameState.player_b && isPlayerA() && (
+        <button onClick={withdraw} className="btn-dark">
+          {isLoading ? (
+            <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+          ) : (
+            "Leave"
+          )}
+        </button>
+      )}
+      {withdrawRematchOfferVisible() && (
+        <button onClick={withdraw} className="btn-dark">
+          {isLoading ? (
+            <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+          ) : (
+            "Withdraw rematch request"
           )}
         </button>
       )}

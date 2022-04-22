@@ -14,6 +14,7 @@ export type GameState = {
   player_a_wants_rematch: boolean;
   player_b_wants_rematch: boolean;
   turn: string | undefined;
+  bet: number;
 };
 
 export type NewAccount = {

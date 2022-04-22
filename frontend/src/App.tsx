@@ -143,9 +143,16 @@ const App = () => {
       const response = await signingClient.instantiate(
         Number(CODE_ID),
         {
-          CreateGame: {},
+          CreateGame: { bet: 3000000 },
         },
-        gameName
+        gameName,
+        undefined,
+        [
+          {
+            amount: "3000000",
+            denom: "uscrt",
+          },
+        ]
       );
       console.log(response);
       handleNewNotification(`New game "${gameName}" created!`, "success");

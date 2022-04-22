@@ -122,6 +122,11 @@ code {
   text-align: center;
 }
 
+.bet-amount {
+  margin: 16px;
+  color: rgb(187, 188, 202);
+}
+
 .game-title h1 {
   margin-top: 20px;
   margin-bottom: 40px;
@@ -211,7 +216,8 @@ code {
 
 .join-button,
 .show-all-games-button,
-.rematch-button {
+.rematch-button,
+.btn-dark {
   padding: 10px 20px;
   box-sizing: border-box;
   border: none;
@@ -223,7 +229,8 @@ code {
 
 .join-button:hover,
 .show-all-games-button:hover,
-.rematch-button:hover {
+.rematch-button:hover,
+.btn-dark:hover {
   background: rgb(14, 160, 111);
 }
 
