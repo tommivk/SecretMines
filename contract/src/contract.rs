@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier, StdError,
-    StdResult, Storage,
+    to_binary, Api, BankMsg, Binary, Coin, CosmosMsg, Env, Extern, HandleResponse, HumanAddr,
+    InitResponse, InitResult, Querier, StdError, StdResult, Storage, Uint128,
 };
 
 use crate::msg::{HandleMsg, InitMsg, QueryMsg, QueryResponse};
@@ -12,26 +12,43 @@ use sha2::{Digest, Sha256};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    _env: Env,
-    _msg: InitMsg,
-) -> StdResult<InitResponse> {
-    let init_seed = [0_u8; 32];
-    deps.storage.set(b"seed", &init_seed);
-    let state = State {
-        board: [0; 25],
-        mine_index: None,
-        player_a: None,
-        player_b: None,
-        player_a_wants_rematch: false,
-        player_b_wants_rematch: false,
-        turn: None,
-        last_quess: None,
-        game_over: false,
-        winner: None,
-    };
+    env: Env,
+    msg: InitMsg,
+) -> InitResult {
+    match msg {
+        InitMsg::CreateGame { bet } => {
+            if env.message.sent_funds.len() == 0 || bet == 0 {
+                return Err(StdError::generic_err("Bet is required"));
+            }
 
-    config(&mut deps.storage).save(&state)?;
-    Ok(InitResponse::default())
+            if env.message.sent_funds[0].denom != "uscrt" {
+                return Err(StdError::generic_err("Denom must be uscrt"));
+            }
+
+            if (env.message.sent_funds[0].amount.u128() as u64) < bet {
+                return Err(StdError::generic_err("Insufficient amount sent"));
+            }
+
+            let init_seed = [0_u8; 32];
+            deps.storage.set(b"seed", &init_seed);
+            let state = State {
+                board: [0; 25],
+                mine_index: None,
+                bet,
+                player_a: Some(env.message.sender.clone()),
+                player_b: None,
+                player_a_wants_rematch: false,
+                player_b_wants_rematch: false,
+                turn: None,
+                last_quess: None,
+                game_over: false,
+                winner: None,
+            };
+
+            config(&mut deps.storage).save(&state)?;
+            Ok(InitResponse::default())
+        }
+    }
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
@@ -43,7 +60,81 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::Quess { index } => try_quess(deps, env, index),
         HandleMsg::Join { secret } => try_join(deps, env, secret),
         HandleMsg::Rematch {} => try_rematch(deps, env),
+        HandleMsg::Withdraw {} => try_withdraw(deps, env),
     }
+}
+
+pub fn try_withdraw<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let state = config_read(&deps.storage).load()?;
+    let sender = Some(env.message.sender.clone());
+    let bet = state.bet;
+
+    if sender == state.player_a && state.player_b.is_none() {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_a = None;
+            Ok(state)
+        })?;
+        return Ok(withdraw_bet(
+            env.contract.address,
+            sender.unwrap(),
+            Uint128(bet as u128),
+        ));
+    }
+
+    if sender == state.player_a
+        && state.player_a_wants_rematch
+        && !state.player_b_wants_rematch
+        && state.game_over
+    {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_a_wants_rematch = false;
+            Ok(state)
+        })?;
+        return Ok(withdraw_bet(
+            env.contract.address,
+            sender.unwrap(),
+            Uint128(bet as u128),
+        ));
+    }
+
+    if sender == state.player_b
+        && state.player_b_wants_rematch
+        && !state.player_a_wants_rematch
+        && state.game_over
+    {
+        config(&mut deps.storage).update(|mut state| {
+            state.player_b_wants_rematch = false;
+            Ok(state)
+        })?;
+        return Ok(withdraw_bet(
+            env.contract.address,
+            sender.unwrap(),
+            Uint128(bet as u128),
+        ));
+    }
+    return Err(StdError::generic_err("Failed to withdraw"));
+}
+
+fn withdraw_bet(
+    contract_address: HumanAddr,
+    receiver: HumanAddr,
+    amount: Uint128,
+) -> HandleResponse {
+    return HandleResponse {
+        messages: vec![CosmosMsg::Bank(BankMsg::Send {
+            from_address: contract_address,
+            to_address: receiver,
+            amount: vec![Coin {
+                denom: "uscrt".to_string(),
+                amount,
+            }],
+        })],
+        log: vec![],
+        data: None,
+    };
 }
 
 pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
@@ -51,14 +142,15 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
     env: Env,
 ) -> StdResult<HandleResponse> {
     let state = config_read(&deps.storage).load()?;
+    let bet = state.bet;
     let sender = Some(env.message.sender.clone());
 
     if !state.game_over {
-        return Err(StdError::generic_err("Game not finished yet!"));
+        return Err(StdError::generic_err("The game is not finished yet!"));
     }
 
     if state.player_a.is_none() || state.player_b.is_none() {
-        return Err(StdError::generic_err("Game not started yet!"));
+        return Err(StdError::generic_err("The game is not started yet!"));
     }
 
     if sender != state.player_a && sender != state.player_b {
@@ -71,6 +163,16 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err(
             "You have already requested a rematch",
         ));
+    }
+
+    if env.message.sent_funds.len() == 0 {
+        return Err(StdError::generic_err("Bet is required"));
+    }
+    if env.message.sent_funds[0].denom != "uscrt" {
+        return Err(StdError::generic_err("Denom must be uscrt"));
+    }
+    if (env.message.sent_funds[0].amount.u128() as u64) < bet {
+        return Err(StdError::generic_err("Insufficient amount sent"));
     }
 
     if sender == state.player_a {
@@ -147,6 +249,18 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err("You have already joined!"));
     }
 
+    let bet = state.bet;
+
+    if env.message.sent_funds.len() == 0 {
+        return Err(StdError::generic_err("Bet is required"));
+    }
+    if env.message.sent_funds[0].denom != "uscrt" {
+        return Err(StdError::generic_err("Denom must be uscrt"));
+    }
+    if (env.message.sent_funds[0].amount.u128() as u64) < bet {
+        return Err(StdError::generic_err("Insufficient amount sent"));
+    }
+
     if state.player_a.is_none() {
         config(&mut deps.storage).update(|mut state| {
             state.player_a = sender.clone();
@@ -156,7 +270,7 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
         return Ok(HandleResponse {
             messages: vec![],
             log: vec![],
-            data: Some(to_binary("Welcome to secret mines")?),
+            data: Some(to_binary("Successfully joined the game")?),
         });
     } else {
         let mut rng = ChaChaRng::from_seed(new_seed);
@@ -170,7 +284,7 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
         return Ok(HandleResponse {
             messages: vec![],
             log: vec![],
-            data: Some(to_binary("Welcome to secret mines")?),
+            data: Some(to_binary("Successfully joined the game")?),
         });
     }
 }
@@ -210,17 +324,27 @@ pub fn try_quess<S: Storage, A: Api, Q: Querier>(
     };
 
     if state.mine_index.unwrap() == index {
+        let winner = turn.unwrap();
+        let bet = state.bet;
         config(&mut deps.storage).update(|mut state| {
             state.board[index as usize] = 2;
             state.game_over = true;
-            state.winner = turn;
+            state.winner = Some(winner.clone());
             state.last_quess = Some(index);
             Ok(state)
         })?;
+
         return Ok(HandleResponse {
-            messages: vec![],
+            messages: vec![CosmosMsg::Bank(BankMsg::Send {
+                from_address: env.contract.address,
+                to_address: winner,
+                amount: vec![Coin {
+                    denom: "uscrt".to_string(),
+                    amount: Uint128((bet * 2) as u128),
+                }],
+            })],
             log: vec![],
-            data: Some(to_binary("game over or whatever")?),
+            data: Some(to_binary("Game over")?),
         });
     }
 
@@ -258,5 +382,6 @@ fn query_board<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
         player_a_wants_rematch: state.player_a_wants_rematch,
         player_b_wants_rematch: state.player_b_wants_rematch,
         turn: state.turn,
+        bet: state.bet,
     })
 }

@@ -10,6 +10,7 @@ pub static CONFIG_KEY: &[u8] = b"config";
 pub struct State {
     pub board: [u8; 25],
     pub mine_index: Option<u8>,
+    pub bet: u64,
     pub player_a: Option<HumanAddr>,
     pub player_b: Option<HumanAddr>,
     pub player_a_wants_rematch: bool,
