@@ -40,7 +40,6 @@ const Game = ({
   useEffect(() => {
     const queryGame = async () => {
       if (!gameData?.address) return;
-      console.log(signingClient);
       try {
         const response = await cosmWasmClient?.queryContractSmart(
           gameData.address,
@@ -63,13 +62,10 @@ const Game = ({
       return;
     }
     const webSocket = new WebSocket(SECRET_WS_URL);
-    console.log("socket: ", webSocket);
 
     webSocket.onopen = function () {
       // listen for compute events with contract address
       let query = `message.module='compute' AND message.contract_address='${gameData?.address}'`;
-
-      console.log(query);
 
       webSocket.send(
         JSON.stringify({
@@ -109,8 +105,10 @@ const Game = ({
   ]);
 
   const requestRematch = async () => {
-    if (!gameData?.address || !signingClient) return;
+    if (!gameData?.address || !signingClient || !gameState) return;
+
     try {
+      const bet = gameState.bet.toString();
       setIsLoading(true);
       await signingClient.execute(
         gameData?.address,
@@ -120,7 +118,7 @@ const Game = ({
         undefined,
         [
           {
-            amount: "3000000",
+            amount: bet,
             denom: "uscrt",
           },
         ]
@@ -189,11 +187,13 @@ const Game = ({
   };
 
   const join = async () => {
-    if (!gameData?.address) return;
-    const seed = EnigmaUtils.GenerateNewSeed();
-    const secret = Buffer.from(seed.slice(0, 8)).readUInt32BE(0);
+    if (!gameData?.address || !gameState) return;
     try {
+      const bet = gameState.bet.toString();
+      const seed = EnigmaUtils.GenerateNewSeed();
+      const secret = Buffer.from(seed.slice(0, 8)).readUInt32BE(0);
       setIsLoading(true);
+
       await signingClient?.execute(
         gameData.address,
         {
@@ -202,7 +202,7 @@ const Game = ({
         undefined,
         [
           {
-            amount: "3000000",
+            amount: bet,
             denom: "uscrt",
           },
         ]

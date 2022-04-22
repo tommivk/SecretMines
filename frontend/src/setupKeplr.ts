@@ -86,9 +86,8 @@ const setupKeplr = async (
   // This pops-up a window for the user to sign on each tx we sent
   const keplrOfflineSigner = window.getOfflineSigner?.(CHAIN_ID);
   const accounts = await keplrOfflineSigner?.getAccounts();
-  console.log("accounts", accounts);
 
-  if(!accounts || !accounts[0] || !keplrOfflineSigner) return
+  if (!accounts || !accounts[0] || !keplrOfflineSigner) return;
   const signingClient = new SigningCosmWasmClient(
     REST_URL, // holodeck - https://chainofsecrets.secrettestnet.io; mainnet - user your LCD/REST provider
     accounts[0].address,
@@ -110,11 +109,11 @@ const setupKeplr = async (
   const client = new CosmWasmClient(REST_URL);
 
   const account = await client.getAccount(accounts[0].address);
-  if(!account) return;
+  if (!account) return;
 
   setAccount(account);
   setSigningClient(signingClient);
-  setCosmWasmClient(client)
+  setCosmWasmClient(client);
 };
 
 export default setupKeplr;

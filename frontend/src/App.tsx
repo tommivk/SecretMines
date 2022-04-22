@@ -7,12 +7,11 @@ import GameList from "./GameList";
 import Notification from "./Notification";
 import AccountDetails from "./AccountDetails";
 import Footer from "./Footer";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import * as generateName from "project-name-generator";
 import { Routes, Route, useNavigate, useMatch } from "react-router-dom";
 import { CosmWasmClient, SigningCosmWasmClient } from "secretjs";
 import { GameInfo, UserAccount } from "./types";
+import { NewGameModal } from "./NewGameModal";
 
 const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 const REST_URL = process.env.REACT_APP_REST_URL;
@@ -36,6 +35,7 @@ const App = () => {
     text: "",
     type: "",
   });
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
 
   let notificationRef: React.MutableRefObject<NodeJS.Timeout | null> =
     useRef(null);
@@ -102,7 +102,6 @@ const App = () => {
     };
     webSocket.onmessage = async (message) => {
       const data = JSON.parse(message.data);
-      console.log(data);
       //update games list when new contract is instantiated
       if (data.id === "gameInstantiate") {
         await getAllGames();
@@ -135,7 +134,7 @@ const App = () => {
     notificationRef.current = timeout;
   };
 
-  const instantiate = async () => {
+  const instantiate = async (bet: string) => {
     if (isCreateGameLoading || !signingClient || !CODE_ID) return;
     let gameName = generateName({ words: 2 }).spaced;
     try {
@@ -143,23 +142,23 @@ const App = () => {
       const response = await signingClient.instantiate(
         Number(CODE_ID),
         {
-          CreateGame: { bet: 3000000 },
+          CreateGame: { bet: Number(bet) },
         },
         gameName,
         undefined,
         [
           {
-            amount: "3000000",
+            amount: bet,
             denom: "uscrt",
           },
         ]
       );
-      console.log(response);
       handleNewNotification(`New game "${gameName}" created!`, "success");
       setIsCreateGameLoading(false);
+      setModalOpen(false);
+      navigate(`/${response.contractAddress}`);
       await updateAccountBalance();
     } catch (error) {
-      console.log(error);
       setIsCreateGameLoading(false);
       if (
         error.message.toLowerCase().includes("contract account already exists")
@@ -289,12 +288,19 @@ const App = () => {
               <div>
                 <>
                   <div className="game-creation">
-                    <button onClick={instantiate}>
-                      {isCreateGameLoading ? (
-                        <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
-                      ) : (
-                        "Create New Game"
-                      )}
+                    {modalOpen && (
+                      <NewGameModal
+                        setModalOpen={setModalOpen}
+                        instantiate={instantiate}
+                        handleNewNotification={handleNewNotification}
+                        isCreateGameLoading={isCreateGameLoading}
+                      />
+                    )}
+                    <button
+                      className="btn-primary"
+                      onClick={() => setModalOpen(true)}
+                    >
+                      Create New Game
                     </button>
                   </div>
                   <GameList allGames={allGames} />
