@@ -1,1 +1,1 @@
-http://secret-mines.herokuapp.com/
+https://secret-mines.netlify.app/
