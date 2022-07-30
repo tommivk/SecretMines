@@ -27,6 +27,7 @@ const Game = ({
   const [activeSquare, setActiveSquare] = useState<number | null>(null);
   const [gradientAngle, setGradientAngle] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [newestBlockTime, setNewestBlockTime] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -55,7 +56,17 @@ const Game = ({
       }
     };
 
-    queryGame();
+    const updateBlockTime = async () => {
+      try {
+        const data = await cosmWasmClient?.getBlock();
+        if (data) {
+          const time = Math.round(new Date(data.header.time).getTime() / 1000);
+          setNewestBlockTime(time);
+        }
+      } catch (error) {
+        console.log(error?.message);
+      }
+    };
 
     if (!SECRET_WS_URL) {
       handleNewNotification("Websocket URL was undefined", "error");
@@ -77,6 +88,16 @@ const Game = ({
           id: "gameUpdate", // jsonrpc id
         })
       );
+      webSocket.send(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          method: "subscribe",
+          params: {
+            query: `tm.event='NewBlock'`,
+          },
+          id: "newBlock",
+        })
+      );
     };
 
     webSocket.onmessage = async (message) => {
@@ -84,6 +105,9 @@ const Game = ({
       //update game state
       if (data.id === "gameUpdate") {
         await queryGame();
+      }
+      if (data.id === "newBlock") {
+        await updateBlockTime();
       }
     };
 
@@ -215,6 +239,21 @@ const Game = ({
     }
   };
 
+  const timeout = async () => {
+    if (!gameData?.address || !gameState) return;
+    try {
+      setIsLoading(true);
+      await signingClient?.execute(gameData.address, {
+        timeout: {},
+      });
+    } catch (error) {
+      handleNewNotification(error.message, "error");
+    } finally {
+      setIsLoading(false);
+      updateAccountBalance();
+    }
+  };
+
   const isPlayer = () => {
     if (
       gameState?.player_a === account?.address ||
@@ -239,8 +278,15 @@ const Game = ({
     return false;
   };
 
+  const playerTimedOut =
+    gameState?.last_action_timestamp &&
+    newestBlockTime &&
+    newestBlockTime > gameState.last_action_timestamp + gameState.timeout;
+
   const getStatusLabel = () => {
     const player = account?.address;
+
+    if (playerTimedOut) return <p>Player timed out</p>;
 
     if (isPlayerA() && !gameState?.player_b) {
       return <p>Waiting for an opponent to join</p>;
@@ -376,6 +422,17 @@ const Game = ({
             "Leave"
           )}
         </button>
+      )}
+      {playerTimedOut && (
+        <>
+          <button onClick={timeout} className="btn-dark">
+            {isLoading ? (
+              <FontAwesomeIcon className="fa-spin" icon={faSpinner} />
+            ) : (
+              "End game"
+            )}
+          </button>
+        </>
       )}
       {withdrawRematchOfferVisible() && (
         <button onClick={withdraw} className="btn-dark">

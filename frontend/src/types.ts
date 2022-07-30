@@ -15,6 +15,10 @@ export type GameState = {
   player_b_wants_rematch: boolean;
   turn: string | undefined;
   bet: number;
+  player_a_timed_out: boolean;
+  player_b_timed_out: boolean;
+  timeout: number;
+  last_action_timestamp: number;
 };
 
 export type NewAccount = {

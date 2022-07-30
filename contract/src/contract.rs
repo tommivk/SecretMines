@@ -16,7 +16,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     msg: InitMsg,
 ) -> InitResult {
     match msg {
-        InitMsg::CreateGame { bet } => {
+        InitMsg::CreateGame { bet, timeout } => {
             if env.message.sent_funds.len() == 0 || bet == 0 {
                 return Err(StdError::generic_err("Bet is required"));
             }
@@ -27,6 +27,12 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 
             if (env.message.sent_funds[0].amount.u128() as u64) < bet {
                 return Err(StdError::generic_err("Insufficient amount sent"));
+            }
+
+            if timeout < 30 || timeout > 300 {
+                return Err(StdError::generic_err(
+                    "Timeout must be between 30 and 300 seconds",
+                ));
             }
 
             let init_seed = [0_u8; 32];
@@ -43,6 +49,10 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
                 last_quess: None,
                 game_over: false,
                 winner: None,
+                last_action_timestamp: None,
+                player_a_timed_out: false,
+                player_b_timed_out: false,
+                timeout,
             };
 
             config(&mut deps.storage).save(&state)?;
@@ -61,6 +71,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::Join { secret } => try_join(deps, env, secret),
         HandleMsg::Rematch {} => try_rematch(deps, env),
         HandleMsg::Withdraw {} => try_withdraw(deps, env),
+        HandleMsg::Timeout {} => try_timeout(deps, env),
     }
 }
 
@@ -212,6 +223,9 @@ pub fn try_rematch<S: Storage, A: Api, Q: Querier>(
             state.last_quess = None;
             state.game_over = false;
             state.winner = None;
+            state.player_a_timed_out = false;
+            state.player_b_timed_out = false;
+            state.last_action_timestamp = Some(env.block.time);
             Ok(state)
         })?;
     }
@@ -279,6 +293,7 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
             state.player_b = sender.clone();
             state.turn = sender;
             state.mine_index = Some(random);
+            state.last_action_timestamp = Some(env.block.time);
             Ok(state)
         })?;
         return Ok(HandleResponse {
@@ -287,6 +302,60 @@ pub fn try_join<S: Storage, A: Api, Q: Querier>(
             data: Some(to_binary("Successfully joined the game")?),
         });
     }
+}
+
+pub fn try_timeout<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let state = config_read(&deps.storage).load()?;
+
+    if state.player_a.is_none() || state.player_b.is_none() {
+        return Err(StdError::generic_err("The game is not started yet"));
+    }
+    if state.game_over {
+        return Err(StdError::generic_err("The game is over"));
+    }
+    if state.last_action_timestamp.is_none() {
+        return Err(StdError::generic_err("No timestamp of last action found"));
+    }
+    if env.block.time < (state.last_action_timestamp.unwrap() + state.timeout) {
+        return Err(StdError::generic_err("Timeout has not been reached yet"));
+    }
+
+    let player_a = state.player_a.unwrap();
+    let player_b = state.player_b.unwrap();
+    let turn = state.turn.unwrap();
+
+    let winner_addr = if turn == player_a {
+        player_b.clone()
+    } else {
+        player_a.clone()
+    };
+
+    let player_a_timed_out: bool = winner_addr != player_a;
+
+    config(&mut deps.storage).update(|mut state| {
+        state.game_over = true;
+        state.winner = Some(winner_addr.clone());
+        state.player_a_timed_out = player_a_timed_out;
+        state.player_b_timed_out = !player_a_timed_out;
+        state.last_action_timestamp = None;
+        Ok(state)
+    })?;
+
+    Ok(HandleResponse {
+        messages: vec![CosmosMsg::Bank(BankMsg::Send {
+            from_address: env.contract.address,
+            to_address: winner_addr,
+            amount: vec![Coin {
+                denom: "uscrt".to_string(),
+                amount: Uint128((state.bet * 2) as u128),
+            }],
+        })],
+        log: vec![],
+        data: Some(to_binary("Success")?),
+    })
 }
 
 pub fn try_quess<S: Storage, A: Api, Q: Querier>(
@@ -317,6 +386,10 @@ pub fn try_quess<S: Storage, A: Api, Q: Querier>(
         return Err(StdError::generic_err("Square already quessed"));
     }
 
+    if env.block.time > (state.last_action_timestamp.unwrap() + state.timeout) {
+        return Err(StdError::generic_err("Timed out"));
+    }
+
     let turn = if sender == state.player_a {
         state.player_b
     } else {
@@ -331,6 +404,7 @@ pub fn try_quess<S: Storage, A: Api, Q: Querier>(
             state.game_over = true;
             state.winner = Some(winner.clone());
             state.last_quess = Some(index);
+            state.last_action_timestamp = None;
             Ok(state)
         })?;
 
@@ -352,6 +426,7 @@ pub fn try_quess<S: Storage, A: Api, Q: Querier>(
         state.board[index as usize] = 1;
         state.last_quess = Some(index);
         state.turn = turn;
+        state.last_action_timestamp = Some(env.block.time);
         Ok(state)
     })?;
 
@@ -383,5 +458,9 @@ fn query_board<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
         player_b_wants_rematch: state.player_b_wants_rematch,
         turn: state.turn,
         bet: state.bet,
+        player_a_timed_out: state.player_a_timed_out,
+        player_b_timed_out: state.player_b_timed_out,
+        timeout: state.timeout,
+        last_action_timestamp: state.last_action_timestamp,
     })
 }

@@ -19,6 +19,10 @@ pub struct State {
     pub last_quess: Option<u8>,
     pub game_over: bool,
     pub winner: Option<HumanAddr>,
+    pub timeout: u64,
+    pub player_a_timed_out: bool,
+    pub player_b_timed_out: bool,
+    pub last_action_timestamp: Option<u64>,
 }
 
 pub fn config<S: Storage>(storage: &mut S) -> Singleton<S, State> {

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum InitMsg {
-    CreateGame { bet: u64 },
+    CreateGame { bet: u64, timeout: u64 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -14,6 +14,7 @@ pub enum HandleMsg {
     Join { secret: u64 },
     Rematch {},
     Withdraw {},
+    Timeout {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,4 +34,8 @@ pub struct QueryResponse {
     pub player_b_wants_rematch: bool,
     pub turn: Option<HumanAddr>,
     pub bet: u64,
+    pub timeout: u64,
+    pub player_a_timed_out: bool,
+    pub player_b_timed_out: bool,
+    pub last_action_timestamp: Option<u64>,
 }

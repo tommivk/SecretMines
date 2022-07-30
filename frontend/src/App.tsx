@@ -134,7 +134,7 @@ const App = () => {
     notificationRef.current = timeout;
   };
 
-  const instantiate = async (bet: string) => {
+  const instantiate = async (bet: string, timeout: Number) => {
     if (isCreateGameLoading || !signingClient || !CODE_ID) return;
     let gameName = generateName({ words: 2 }).spaced;
     try {
@@ -142,7 +142,7 @@ const App = () => {
       const response = await signingClient.instantiate(
         Number(CODE_ID),
         {
-          CreateGame: { bet: Number(bet) },
+          CreateGame: { bet: Number(bet), timeout },
         },
         gameName,
         undefined,
